@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:mobile/core/services/storage_service.dart';
+import 'package:mobile/features/auth/data/models/user_model.dart';
+import 'package:mobile/features/auth/data/services/auth_service.dart';
 import 'package:mobile/shared/widgets/mahasiswa/bottom_nav.dart';
 import 'package:mobile/shared/widgets/mahasiswa/glass_card.dart';
 
@@ -12,6 +13,30 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   final _currentIndex = 3;
+  final AuthService _authService = AuthService();
+  
+  User? _user;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    try {
+      final user = await _authService.getMe();
+      if (mounted) {
+        setState(() {
+          _user = user;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   void _onNavTapped(int index) {
     if (index == _currentIndex) return;
@@ -37,16 +62,8 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    final user = {
-      "name": "Kelio Xenelly",
-      "email": "kelio.xenelly@itbss.ac.id",
-      "nim": "23110001",
-      "prodi": "Sistem dan Teknologi Informasi",
-      "role": "mahasiswa"
-    };
-
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F5F9),
+      backgroundColor: const Color(0xFFF8FAFC),
       bottomNavigationBar: BottomNav(
         currentIndex: _currentIndex,
         onTap: _onNavTapped,
@@ -80,7 +97,6 @@ class _ProfilePageState extends State<ProfilePage> {
                           if (Navigator.of(context).canPop()) {
                               Navigator.of(context).pop();
                             } else {
-                              // Jika tidak bisa back (stack kosong), arahkan ke dashboard
                               Navigator.pushReplacementNamed(context, '/dashboard');
                           }
                         },
@@ -116,41 +132,46 @@ class _ProfilePageState extends State<ProfilePage> {
                         height: 80,
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(20),
+                          shape: BoxShape.circle,
                           border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
                         ),
                         child: const Icon(Icons.person, size: 40, color: Colors.white),
                       ),
                       const SizedBox(width: 16),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            user['name']!,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
+                      if (_isLoading)
+                        const CircularProgressIndicator(color: Colors.white)
+                      else
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _user?.name ?? "Nama Tidak Diketahui",
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                _user?.email ?? "-",
+                                style: const TextStyle(color: Colors.white70),
+                              ),
+                              const SizedBox(height: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  "NIM: ${_user?.identifier ?? '-'}",
+                                  style: const TextStyle(color: Colors.white),
+                                ),
+                              )
+                            ],
                           ),
-                          Text(
-                            user['email']!,
-                            style: const TextStyle(color: Colors.white70),
-                          ),
-                          const SizedBox(height: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              "NIM: ${user['nim']}",
-                              style: const TextStyle(color: Colors.white),
-                            ),
-                          )
-                        ],
-                      )
+                        )
                     ],
                   )
                 ],
@@ -166,21 +187,24 @@ class _ProfilePageState extends State<ProfilePage> {
                 children: [
 
                   /// 📋 INFO CARD
-                  GlassCard(
-                    child: Column(
-                      children: [
-                        _buildItem(Icons.person, "Nama Lengkap", user['name']!),
-                        _divider(),
-                        _buildItem(Icons.email, "Email", user['email']!),
-                        _divider(),
-                        _buildItem(Icons.badge, "NIM", user['nim']!),
-                        _divider(),
-                        _buildItem(Icons.school, "Program Studi", user['prodi']!),
-                        _divider(),
-                        _buildItem(Icons.person_outline, "Role", user['role']!),
-                      ],
+                  if (_isLoading)
+                    const CircularProgressIndicator()
+                  else
+                    GlassCard(
+                      child: Column(
+                        children: [
+                          _buildItem(Icons.person, "Nama Lengkap", _user?.name ?? "-"),
+                          _divider(),
+                          _buildItem(Icons.email, "Email", _user?.email ?? "-"),
+                          _divider(),
+                          _buildItem(Icons.badge, "NIM", _user?.identifier ?? "-"),
+                          _divider(),
+                          _buildItem(Icons.school, "Program Studi", _user?.prodiName ?? "-"),
+                          _divider(),
+                          _buildItem(Icons.person_outline, "Role", _user?.role ?? "-"),
+                        ],
+                      ),
                     ),
-                  ),
 
                   const SizedBox(height: 20),
 
@@ -211,14 +235,14 @@ class _ProfilePageState extends State<ProfilePage> {
                   /// 🔴 LOGOUT
                   GestureDetector(
                     onTap: () async {
-                      await StorageService.removeAll();
+                      await _authService.logout();
 
                       if (!context.mounted) return;
 
                       Navigator.pushNamedAndRemoveUntil(
                         context,
                         '/login',
-                            (route) => false,
+                        (route) => false,
                       );
                     },
                     child: Container(

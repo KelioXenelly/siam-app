@@ -1,8 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:mobile/features/dosen/data/services/dosen_service.dart';
 import 'package:mobile/shared/widgets/dosen/bottom_nav.dart';
 
 class DosenDetailKelasPage extends StatefulWidget {
-  const DosenDetailKelasPage({super.key});
+  final int kelasId;
+  final String namaMataKuliah;
+  final String kodeKelas;
+  final String semester;
+  final String tahunAjaran;
+
+  const DosenDetailKelasPage({
+    super.key,
+    required this.kelasId,
+    required this.namaMataKuliah,
+    required this.kodeKelas,
+    required this.semester,
+    required this.tahunAjaran,
+  });
 
   @override
   State<DosenDetailKelasPage> createState() => _DosenDetailKelasPageState();
@@ -11,6 +25,38 @@ class DosenDetailKelasPage extends StatefulWidget {
 class _DosenDetailKelasPageState extends State<DosenDetailKelasPage> {
 
   final _currentIndex = 1;
+  final DosenService _dosenService = DosenService();
+
+  List<dynamic> _meetings = [];
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMeetings();
+  }
+
+  Future<void> _loadMeetings() async {
+    try {
+      final data = await _dosenService.getPertemuanByKelas(widget.kelasId);
+      if (mounted) {
+        setState(() {
+          _meetings = data;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString();
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  int get _completedCount => _meetings.where((m) => m['status'] == 'Selesai').length;
 
   void _onNavTapped(int index) {
     if (index == _currentIndex) return;
@@ -23,26 +69,15 @@ class _DosenDetailKelasPageState extends State<DosenDetailKelasPage> {
         Navigator.pushReplacementNamed(context, '/dosen/kelas');
         break;
       case 2:
-        Navigator.pushReplacementNamed(context, '/profile');
+        Navigator.pushReplacementNamed(context, '/dosen/profile');
         break;
     }
   }
 
-  // 🔥 dummy meeting data (1–14)
-  List<Map<String, dynamic>> meetings = List.generate(14, (i) {
-    return {
-      "number": i + 1,
-      "date": DateTime(2026, 2, (i * 7) + 1),
-      "isDone": i < 7,
-      "attendance": i < 7 ? (80 + (i % 5) * 3) : null,
-    };
-  });
-
-  int get completed => meetings.where((m) => m["isDone"]).length;
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
       bottomNavigationBar: BottomNav(
         currentIndex: _currentIndex,
         onTap: _onNavTapped,
@@ -57,11 +92,11 @@ class _DosenDetailKelasPageState extends State<DosenDetailKelasPage> {
               padding: const EdgeInsets.fromLTRB(20, 60, 20, 30),
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Color(0xFF7C3AED), Color(0xFF6366F1)],
+                  colors: [Color(0xFF7C3AED), Color(0xFF4F46E5)],
                 ),
                 borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(30),
-                  bottomRight: Radius.circular(30),
+                  bottomLeft: Radius.circular(40),
+                  bottomRight: Radius.circular(40),
                 ),
               ),
               child: Column(
@@ -74,7 +109,6 @@ class _DosenDetailKelasPageState extends State<DosenDetailKelasPage> {
                       if (Navigator.of(context).canPop()) {
                         Navigator.of(context).pop();
                       } else {
-                        // Jika tidak bisa back (stack kosong), arahkan ke dashboard
                         Navigator.pushReplacementNamed(context, '/dosen/kelas');
                       }
                     },
@@ -91,18 +125,18 @@ class _DosenDetailKelasPageState extends State<DosenDetailKelasPage> {
 
                   const SizedBox(height: 20),
 
-                  const Text(
-                    "Pemrograman Web",
-                    style: TextStyle(
+                  Text(
+                    widget.namaMataKuliah,
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
 
-                  const Text(
-                    "TI-301 • Genap 2025/2026",
-                    style: TextStyle(color: Colors.white70),
+                  Text(
+                    "${widget.kodeKelas} • SMT ${widget.semester} (${widget.tahunAjaran})",
+                    style: const TextStyle(color: Colors.white70),
                   ),
 
                   const SizedBox(height: 16),
@@ -121,7 +155,7 @@ class _DosenDetailKelasPageState extends State<DosenDetailKelasPage> {
                           children: [
                             const Text("Progress", style: TextStyle(color: Colors.white)),
                             Text(
-                              "$completed/${meetings.length} Pertemuan",
+                              "$_completedCount/${_meetings.length} Pertemuan",
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
@@ -131,7 +165,7 @@ class _DosenDetailKelasPageState extends State<DosenDetailKelasPage> {
                         ),
                         const SizedBox(height: 8),
                         LinearProgressIndicator(
-                          value: completed / meetings.length,
+                          value: _meetings.isEmpty ? 0 : _completedCount / _meetings.length,
                           backgroundColor: Colors.white24,
                           color: Colors.white,
                         )
@@ -149,11 +183,11 @@ class _DosenDetailKelasPageState extends State<DosenDetailKelasPage> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 children: [
-                  Expanded(child: _statBox("32", "Mahasiswa", Colors.blue)),
+                  Expanded(child: _statBox("${_meetings.length}", "Total Sesi", Colors.blue)),
                   const SizedBox(width: 10),
-                  Expanded(child: _statBox("$completed", "Selesai", Colors.green)),
+                  Expanded(child: _statBox("$_completedCount", "Selesai", Colors.green)),
                   const SizedBox(width: 10),
-                  Expanded(child: _statBox("${14 - completed}", "Tersisa", Colors.purple)),
+                  Expanded(child: _statBox("${_meetings.length - _completedCount}", "Tersisa", Colors.purple)),
                 ],
               ),
             ),
@@ -177,15 +211,45 @@ class _DosenDetailKelasPageState extends State<DosenDetailKelasPage> {
             // 📋 LIST MEETING
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                children: meetings.map((m) => _meetingCard(m)).toList(),
-              ),
+              child: _buildMeetingList(),
             ),
 
             const SizedBox(height: 80),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildMeetingList() {
+    if (_isLoading) {
+      return const Padding(
+        padding: EdgeInsets.all(40),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_errorMessage != null) {
+      return Center(
+        child: Column(
+          children: [
+            const Icon(Icons.error_outline, color: Colors.red, size: 50),
+            const SizedBox(height: 16),
+            Text(_errorMessage!, textAlign: TextAlign.center),
+          ],
+        ),
+      );
+    }
+
+    if (_meetings.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.all(20),
+        child: Center(child: Text("Belum ada pertemuan terjadwal untuk kelas ini.")),
+      );
+    }
+
+    return Column(
+      children: _meetings.map((m) => _meetingCard(m)).toList(),
     );
   }
 
@@ -207,10 +271,20 @@ class _DosenDetailKelasPageState extends State<DosenDetailKelasPage> {
   }
 
   // 🔹 MEETING CARD
-  Widget _meetingCard(Map<String, dynamic> m) {
-
-    final isDone = m["isDone"];
-    final date = m["date"] as DateTime;
+  Widget _meetingCard(dynamic m) {
+    final status = m['status'] ?? 'Terjadwal';
+    final isDone = status == 'Selesai';
+    final isBerlangsung = status == 'Berlangsung';
+    final dateStr = m['tanggal'] ?? ''; // Format: YYYY-MM-DD
+    
+    DateTime? date;
+    if (dateStr.isNotEmpty) {
+      try {
+        date = DateTime.parse(dateStr);
+      } catch (e) {
+        // Abaikan
+      }
+    }
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
@@ -221,6 +295,7 @@ class _DosenDetailKelasPageState extends State<DosenDetailKelasPage> {
         boxShadow: [
           BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)
         ],
+        border: isBerlangsung ? Border.all(color: Colors.blueAccent, width: 1.5) : null,
       ),
       child: Row(
         children: [
@@ -230,12 +305,14 @@ class _DosenDetailKelasPageState extends State<DosenDetailKelasPage> {
             width: 50,
             height: 50,
             decoration: BoxDecoration(
-              color: isDone ? Colors.green.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.1),
+              color: isDone 
+                ? Colors.green.withValues(alpha: 0.1) 
+                : (isBerlangsung ? Colors.blue.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.1)),
               borderRadius: BorderRadius.circular(14),
             ),
             child: Icon(
-              isDone ? Icons.check_circle : Icons.access_time,
-              color: isDone ? Colors.green : Colors.grey,
+              isDone ? Icons.check_circle : (isBerlangsung ? Icons.play_circle_fill : Icons.access_time),
+              color: isDone ? Colors.green : (isBerlangsung ? Colors.blue : Colors.grey),
             ),
           ),
 
@@ -247,17 +324,17 @@ class _DosenDetailKelasPageState extends State<DosenDetailKelasPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Pertemuan ke-${m["number"]}",
+                  m['topik'] ?? "Pertemuan ke-${m["pertemuan_ke"]}",
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 Text(
-                  "${_formatDate(date)}",
+                  date != null ? _formatDate(date) : dateStr,
                   style: const TextStyle(color: Colors.grey),
                 ),
-                if (isDone)
-                  Text(
-                    "Kehadiran: ${m["attendance"]}%",
-                    style: const TextStyle(color: Colors.green),
+                if (isBerlangsung)
+                  const Text(
+                    "Sedang Berlangsung",
+                    style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 12),
                   )
               ],
             ),
@@ -276,17 +353,25 @@ class _DosenDetailKelasPageState extends State<DosenDetailKelasPage> {
           else
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
+              decoration: BoxDecoration(
+                gradient: isBerlangsung ? null : const LinearGradient(
                   colors: [Color(0xFF7C3AED), Color(0xFF6366F1)],
                 ),
-                borderRadius: BorderRadius.all(Radius.circular(12)),
+                color: isBerlangsung ? Colors.blueAccent : null,
+                borderRadius: const BorderRadius.all(Radius.circular(12)),
               ),
-              child: const Row(
+              child: Row(
                 children: [
-                  Icon(Icons.qr_code, color: Colors.white, size: 16),
-                  SizedBox(width: 6),
-                  Text("Mulai", style: TextStyle(color: Colors.white)),
+                  Icon(
+                    isBerlangsung ? Icons.door_front_door : Icons.qr_code, 
+                    color: Colors.white, 
+                    size: 16
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    isBerlangsung ? "Masuk" : "Mulai", 
+                    style: const TextStyle(color: Colors.white)
+                  ),
                 ],
               ),
             )

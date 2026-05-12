@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:mobile/features/dosen/data/services/dosen_service.dart';
+import 'package:mobile/features/dosen/presentation/pages/kelas_detail_page.dart';
 import 'package:mobile/shared/widgets/dosen/bottom_nav.dart';
 
 class DosenKelasPage extends StatefulWidget {
@@ -11,6 +13,36 @@ class DosenKelasPage extends StatefulWidget {
 class _DosenKelasPageState extends State<DosenKelasPage> {
 
   final _currentIndex = 1;
+  final DosenService _dosenService = DosenService();
+  
+  List<dynamic> _courses = [];
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadKelas();
+  }
+
+  Future<void> _loadKelas() async {
+    try {
+      final data = await _dosenService.getKelasSaya();
+      if (mounted) {
+        setState(() {
+          _courses = data;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString();
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   void _onNavTapped(int index) {
     if (index == _currentIndex) return;
@@ -28,23 +60,10 @@ class _DosenKelasPageState extends State<DosenKelasPage> {
     }
   }
 
-  // 🔥 dummy data (nanti ganti API)
-  final List<Map<String, String>> courses = [
-    {
-      "name": "Pemrograman Web",
-      "code": "TI-301",
-      "semester": "Genap 2025/2026"
-    },
-    {
-      "name": "Jaringan Komputer",
-      "code": "TI-304",
-      "semester": "Genap 2025/2026"
-    }
-  ];
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
       bottomNavigationBar: BottomNav(
         currentIndex: _currentIndex,
         onTap: _onNavTapped,
@@ -59,11 +78,11 @@ class _DosenKelasPageState extends State<DosenKelasPage> {
               padding: const EdgeInsets.fromLTRB(20, 60, 20, 30),
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Color(0xFF7C3AED), Color(0xFF6366F1)],
+                  colors: [Color(0xFF7C3AED), Color(0xFF4F46E5)],
                 ),
                 borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(30),
-                  bottomRight: Radius.circular(30),
+                  bottomLeft: Radius.circular(40),
+                  bottomRight: Radius.circular(40),
                 ),
               ),
               child: Column(
@@ -97,24 +116,22 @@ class _DosenKelasPageState extends State<DosenKelasPage> {
                     ],
                   ),
                   const SizedBox(height: 10),
-                  Text(
-                    "${courses.length} kelas aktif semester ini",
-                    style: const TextStyle(color: Colors.white70),
-                  )
+                  _isLoading 
+                      ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                      : Text(
+                          "${_courses.length} kelas aktif semester ini",
+                          style: const TextStyle(color: Colors.white70),
+                        )
                 ],
               ),
             ),
 
             const SizedBox(height: 16),
 
-            // 🔥 LIST KELAS
+            // 🔥 LIST KELAS ATAU LOADING
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                children: courses.map((course) {
-                  return _kelasCard(course);
-                }).toList(),
-              ),
+              child: _buildBody(),
             ),
 
             const SizedBox(height: 80),
@@ -124,87 +141,157 @@ class _DosenKelasPageState extends State<DosenKelasPage> {
     );
   }
 
+  Widget _buildBody() {
+    if (_isLoading) {
+      return const Padding(
+        padding: EdgeInsets.all(40),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_errorMessage != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, color: Colors.red, size: 50),
+            const SizedBox(height: 16),
+            Text(_errorMessage!, textAlign: TextAlign.center),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  _isLoading = true;
+                  _errorMessage = null;
+                });
+                _loadKelas();
+              },
+              child: const Text('Coba Lagi'),
+            )
+          ],
+        ),
+      );
+    }
+
+    if (_courses.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.all(40.0),
+        child: Center(child: Text('Belum ada kelas yang ditugaskan kepada Anda.')),
+      );
+    }
+
+    return Column(
+      children: _courses.map((course) {
+        return _kelasCard(course);
+      }).toList(),
+    );
+  }
+
   // 🔹 CARD KELAS
-  Widget _kelasCard(Map<String, String> course) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-          )
-        ],
-      ),
-      child: Column(
-        children: [
-          // GestureDetector(
-          //   onTap: () => Navigator.pushNamed(context, '/dosen/kelas/detail'),
-          // ),
-          // HEADER
-          Row(
-            children: [
-              Container(
-                width: 60,
-                height: 60,
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFF7C3AED), Color(0xFF6366F1)],
+  Widget _kelasCard(dynamic course) {
+    final namaMk = course['mata_kuliah']?['nama_mk'] ?? 'Mata Kuliah Unknown';
+    final kodeKelas = course['kode_kelas'] ?? '-';
+    final semester = course['semester'] ?? '-';
+    final tahunAjaran = course['tahun_ajaran'] ?? '-';
+    
+    // Dari data dummy di design, kita bisa asumsikan mahasiswa = kapasitas (sementara), dsb.
+    // Atau ambil dari panjang array mahasiswas jika ada.
+    final totalMahasiswa = (course['mahasiswas'] as List?)?.length ?? 0;
+    // Pertemuan bisa dicek kalau ada count, tapi API dasar belum menyediakan jumlah pertemuan selesai.
+    // Kita biarkan 0 dulu / tidak tampil stat detail. Kita tampilkan info dasar saja dulu.
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DosenDetailKelasPage(
+              kelasId: course['id'],
+              namaMataKuliah: namaMk,
+              kodeKelas: kodeKelas,
+              semester: "$semester",
+              tahunAjaran: tahunAjaran,
+            ),
+          ),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+            )
+          ],
+        ),
+        child: Column(
+          children: [
+            // HEADER
+            Row(
+              children: [
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Color(0xFF7C3AED), Color(0xFF6366F1)],
+                    ),
+                    borderRadius: BorderRadius.all(Radius.circular(16)),
                   ),
-                  borderRadius: BorderRadius.all(Radius.circular(16)),
+                  child: const Icon(Icons.menu_book, color: Colors.white),
                 ),
-                child: const Icon(Icons.menu_book, color: Colors.white),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      course['name']!,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        namaMk,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
-                    ),
-                    Text(
-                      "${course['code']} • ${course['semester']}",
-                      style: const TextStyle(color: Colors.grey),
-                    ),
-                  ],
-                ),
-              )
-            ],
-          ),
+                      Text(
+                        "$kodeKelas • SMT $semester ($tahunAjaran)",
+                        style: const TextStyle(color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                )
+              ],
+            ),
 
-          const SizedBox(height: 16),
+            const SizedBox(height: 16),
 
-          // STATS
-          Row(
-            children: [
-              Expanded(child: _statBox("32", "Mahasiswa", Colors.purple)),
-              const SizedBox(width: 10),
-              Expanded(child: _statBox("14", "Pertemuan", Colors.blue)),
-              const SizedBox(width: 10),
-              Expanded(child: _statBox("7", "Selesai", Colors.green)),
-            ],
-          ),
+            // STATS
+            Row(
+              children: [
+                Expanded(child: _statBox("$totalMahasiswa", "Mahasiswa", Colors.purple)),
+                const SizedBox(width: 10),
+                Expanded(child: _statBox("16", "Total", Colors.blue)), // Standard pertemuan adalah 16
+                const SizedBox(width: 10),
+                Expanded(child: _statBox("?", "Selesai", Colors.green)), // Belum ada API aggregasi selesai
+              ],
+            ),
 
-          const SizedBox(height: 16),
-          const Divider(),
+            const SizedBox(height: 16),
+            const Divider(),
 
-          // ACTION
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: const [
-              Text("Lihat detail & mulai sesi"),
-              Icon(Icons.arrow_forward, color: Colors.purple),
-            ],
-          )
-        ],
+            // ACTION
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: const [
+                Text("Lihat detail & mulai sesi"),
+                Icon(Icons.arrow_forward, color: Colors.purple),
+              ],
+            )
+          ],
+        ),
       ),
     );
   }

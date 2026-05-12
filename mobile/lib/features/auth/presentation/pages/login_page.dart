@@ -14,9 +14,9 @@ class _LoginPageState extends State<LoginPage> {
   final _identifierController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  bool _obscureText = true;    // State untuk Show/Hide Password
-  bool _isLoading = false;     // State untuk Loading
-  String _role = 'mahasiswa';  // State untuk Role Selection
+  bool _obscureText = true;
+  bool _isLoading = false;
+  String _role = 'mahasiswa';
 
   @override
   void dispose() {
@@ -28,7 +28,13 @@ class _LoginPageState extends State<LoginPage> {
   void _handleLogin() async {
     if (_identifierController.text.isEmpty || _passwordController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Email/ID dan Password tidak boleh kosong"))
+        SnackBar(
+          content: const Text("Email/ID dan Password tidak boleh kosong"),
+          backgroundColor: Colors.amber[800],
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(16),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        )
       );
       return;
     }
@@ -43,22 +49,15 @@ class _LoginPageState extends State<LoginPage> {
 
       if (!mounted) return;
 
-      // Validasi: Apakah Role di Server == Role di Tab?
       if (user.role != _role) {
-        // PENTING: Karena login() di AuthService biasanya otomatis simpan token,
-        // Kita harus logout/clear session jika tab-nya salah agar tidak auto-login.
-
         try {
           await _authService.logout();
-        } catch (_) {
-          // Abaikan error logout
-        }
+        } catch (_) {}
 
         final formattedRole = user.role[0].toUpperCase() + user.role.substring(1);
         throw Exception("Akun Anda terdaftar sebagai $formattedRole. Silakan pilih tab yang sesuai.");
       }
 
-      // Jika benar, navigasi sesuai role
       if (user.role == 'mahasiswa') {
         Navigator.pushReplacementNamed(context, '/dashboard');
       } else if (user.role == 'dosen') {
@@ -68,8 +67,14 @@ class _LoginPageState extends State<LoginPage> {
       final message = e.toString().replaceAll('Exception: ', '');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(message),
-          backgroundColor: Colors.red,
+          content: Row(
+            children: [
+              const Icon(Icons.error_outline, color: Colors.white),
+              const SizedBox(width: 12),
+              Expanded(child: Text(message)),
+            ],
+          ),
+          backgroundColor: Colors.red[400],
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsets.all(16),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -87,9 +92,9 @@ class _LoginPageState extends State<LoginPage> {
         width: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF2563EB), Color(0xFF3B82F6), Color(0xFF60A5FA)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF1E40AF), Color(0xFF3B82F6), Color(0xFFEFF6FF)],
           ),
         ),
         child: Center(
@@ -100,77 +105,161 @@ class _LoginPageState extends State<LoginPage> {
                 GlassCard(
                   child: Column(
                     children: [
-                      // Logo S
                       Container(
-                        width: 80, height: 80,
+                        width: 90, height: 90,
                         decoration: BoxDecoration(
-                          gradient: const LinearGradient(colors: [Color(0xFF2563EB), Color(0xFF4F46E5)]),
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)],
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF2563EB), Color(0xFF4F46E5)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(24),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.blue.withValues(alpha: 0.3),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
+                            )
+                          ],
                         ),
-                        child: const Center(child: Text("S", style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.white))),
+                        child: const Center(
+                          child: Text(
+                            "S", 
+                            style: TextStyle(
+                              fontSize: 48, 
+                              fontWeight: FontWeight.w900, 
+                              color: Colors.white,
+                              shadows: [
+                                Shadow(color: Colors.black26, offset: Offset(2, 2), blurRadius: 4)
+                              ]
+                            )
+                          )
+                        ),
                       ),
-                      const SizedBox(height: 16),
-                      const Text("SIAM", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
-                      const Text("Sistem Informasi Absensi Mahasiswa", style: TextStyle(color: Colors.grey, fontSize: 12)),
-                      const SizedBox(height: 30),
+                      const SizedBox(height: 20),
+                      const Text(
+                        "Selamat Datang", 
+                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: -0.5)
+                      ),
+                      const Text(
+                        "SIAM - Sistem Absensi Pintar", 
+                        style: TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w500)
+                      ),
+                      const SizedBox(height: 32),
 
-                      // Role Switch (Custom Tab)
                       Container(
+                        height: 50,
                         padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(12)),
-                        child: Row(
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100], 
+                          borderRadius: BorderRadius.circular(16)
+                        ),
+                        child: Stack(
                           children: [
-                            _buildRoleTab("mahasiswa", "Mahasiswa"),
-                            _buildRoleTab("dosen", "Dosen"),
+                            AnimatedAlign(
+                              duration: const Duration(milliseconds: 250),
+                              curve: Curves.easeInOut,
+                              alignment: _role == 'mahasiswa' ? Alignment.centerLeft : Alignment.centerRight,
+                              child: Container(
+                                width: (MediaQuery.of(context).size.width - 100) / 2,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.05),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
+                                    )
+                                  ],
+                                ),
+                              ),
+                            ),
+                            Row(
+                              children: [
+                                _buildRoleTab("mahasiswa", "Mahasiswa"),
+                                _buildRoleTab("dosen", "Dosen"),
+                              ],
+                            ),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 28),
 
-                      // Input Email/NIM
                       _buildLabel(_role == 'mahasiswa' ? 'Email / NIM' : 'Email / NIDN'),
                       TextField(
                         controller: _identifierController,
-                        decoration: _inputDecoration(_role == 'mahasiswa' ? 'Masukkan email atau NIM' : 'Masukkan email atau NIDN'),
+                        keyboardType: TextInputType.emailAddress,
+                        textInputAction: TextInputAction.next,
+                        decoration: _inputDecoration(
+                          _role == 'mahasiswa' ? 'Contoh: 23110001' : 'Contoh: nidn@kampus.ac.id',
+                          Icons.person_outline
+                        ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 18),
 
-                      // Input Password
                       _buildLabel('Password'),
                       TextField(
                         controller: _passwordController,
                         obscureText: _obscureText,
-                        decoration: _inputDecoration('Masukkan password').copyWith(
+                        textInputAction: TextInputAction.done,
+                        onSubmitted: (_) => _handleLogin(),
+                        decoration: _inputDecoration('••••••••', Icons.lock_outline).copyWith(
                           suffixIcon: IconButton(
-                            icon: Icon(_obscureText ? Icons.visibility_off : Icons.visibility),
+                            icon: Icon(
+                              _obscureText ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                              color: Colors.grey[400],
+                              size: 20,
+                            ),
                             onPressed: () => setState(() => _obscureText = !_obscureText),
                           ),
                         ),
                       ),
 
-                      const SizedBox(height: 24),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: () {},
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.blue[700],
+                            textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)
+                          ),
+                          child: const Text("Lupa Password?"),
+                        ),
+                      ),
 
-                      // Submit Button
+                      const SizedBox(height: 12),
+
                       SizedBox(
                         width: double.infinity,
-                        height: 55,
+                        height: 56,
                         child: ElevatedButton(
                           onPressed: _isLoading ? null : _handleLogin,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF2563EB),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            elevation: 5,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            elevation: 0,
                           ),
                           child: _isLoading
-                              ? const CircularProgressIndicator(color: Colors.white)
-                              : const Text("Masuk", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                              ? const SizedBox(
+                                  width: 24, height: 24,
+                                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5)
+                                )
+                              : const Text(
+                                  "Masuk Sekarang", 
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)
+                                ),
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 32),
+                const Text(
+                  "© 2026 ITB STIKOM BALI",
+                  style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w500),
+                ),
               ],
             ),
           ),
@@ -179,21 +268,21 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  // Helper Widgets untuk kerapihan kode
   Widget _buildRoleTab(String value, String label) {
     bool isSelected = _role == value;
     return Expanded(
       child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTap: () => setState(() => _role = value),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          decoration: BoxDecoration(
-            color: isSelected ? Colors.white : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
-            boxShadow: isSelected ? [BoxShadow(color: Colors.black12, blurRadius: 4)] : [],
-          ),
-          child: Center(
-            child: Text(label, style: TextStyle(color: isSelected ? Colors.blue[700] : Colors.grey, fontWeight: FontWeight.bold)),
+        child: Center(
+          child: AnimatedDefaultTextStyle(
+            duration: const Duration(milliseconds: 200),
+            style: TextStyle(
+              color: isSelected ? Colors.blue[700] : Colors.grey[500],
+              fontWeight: FontWeight.bold,
+              fontSize: 14
+            ),
+            child: Text(label),
           ),
         ),
       ),
@@ -201,16 +290,31 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Widget _buildLabel(String text) {
-    return Align(alignment: Alignment.centerLeft, child: Padding(padding: const EdgeInsets.only(bottom: 8), child: Text(text, style: const TextStyle(fontWeight: FontWeight.w500))));
+    return Align(
+      alignment: Alignment.centerLeft, 
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 8, left: 4), 
+        child: Text(text, style: TextStyle(fontWeight: FontWeight.w600, color: Colors.blueGrey[800], fontSize: 13))
+      )
+    );
   }
 
-  InputDecoration _inputDecoration(String hint) {
+  InputDecoration _inputDecoration(String hint, IconData icon) {
     return InputDecoration(
       hintText: hint,
+      hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
       filled: true,
-      fillColor: Colors.white.withValues(alpha: 0.5),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      fillColor: Colors.grey[50],
+      prefixIcon: Icon(icon, color: Colors.grey[400], size: 20),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16), 
+        borderSide: BorderSide(color: Colors.grey[200]!, width: 1.5)
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16), 
+        borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.8)
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
     );
   }
 }

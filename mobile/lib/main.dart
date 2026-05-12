@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:mobile/core/services/storage_service.dart';
 import 'package:mobile/features/auth/presentation/pages/login_page.dart';
 import 'package:mobile/features/dosen/presentation/pages/dashboard_page.dart';
-import 'package:mobile/features/dosen/presentation/pages/kelas_detail_page.dart';
 import 'package:mobile/features/dosen/presentation/pages/kelas_page.dart';
 import 'package:mobile/features/dosen/presentation/pages/profile_page.dart';
 import 'package:mobile/features/mahasiswa/presentation/pages/dashboard_page.dart';
@@ -45,7 +44,6 @@ class MyApp extends StatelessWidget {
         // Dosen Routes
         '/dosen/dashboard': (context) => const DosenDashboardPage(),
         '/dosen/kelas': (context) => const DosenKelasPage(),
-        '/dosen/kelas/detail': (context) => DosenDetailKelasPage(),
         '/dosen/profile': (context) => const DosenProfilePage(),
       },
       home: FutureBuilder<Map<String, dynamic>>(

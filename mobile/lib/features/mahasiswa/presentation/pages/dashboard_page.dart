@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:mobile/features/auth/data/models/user_model.dart';
+import 'package:mobile/features/auth/data/services/auth_service.dart';
+import 'package:mobile/features/mahasiswa/data/services/mahasiswa_service.dart';
 import 'package:mobile/shared/widgets/mahasiswa/glass_card.dart';
 import 'package:mobile/shared/widgets/mahasiswa/progress_ring.dart';
 import 'package:mobile/shared/widgets/mahasiswa/bottom_nav.dart';
@@ -13,32 +16,81 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
 
   final _currentIndex = 0;
+  final AuthService _authService = AuthService();
+  final MahasiswaService _mahasiswaService = MahasiswaService();
 
-    void _onNavTapped(int index) {
-      if (index == _currentIndex) return;
+  User? _user;
+  List<dynamic> _riwayat = [];
+  bool _isLoading = true;
 
-      switch (index) {
-        case 0:
-          Navigator.pushReplacementNamed(context, '/dashboard');
-          break;
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
 
-        case 1:
-        // nanti scan
-          break;
-
-        case 2:
-        // nanti riwayat
-          break;
-
-        case 3:
-          Navigator.pushReplacementNamed(context, '/profile');
-          break;
+  Future<void> _loadData() async {
+    try {
+      final user = await _authService.getMe();
+      final riwayat = await _mahasiswaService.getRiwayatAbsensi();
+      
+      if (mounted) {
+        setState(() {
+          _user = user;
+          _riwayat = riwayat;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
+  }
+
+  void _onNavTapped(int index) {
+    if (index == _currentIndex) return;
+
+    switch (index) {
+      case 0:
+        Navigator.pushReplacementNamed(context, '/dashboard');
+        break;
+
+      case 1:
+      // nanti scan
+        break;
+
+      case 2:
+      // nanti riwayat
+        break;
+
+      case 3:
+        Navigator.pushReplacementNamed(context, '/profile');
+        break;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    // 📊 STATS CALCULATION
+    int hadir = _riwayat.where((r) => r['status'] == 'hadir').length;
+    int terlambat = _riwayat.where((r) => r['status'] == 'terlambat').length;
+    int alfa = _riwayat.where((r) => r['status'] == 'alfa').length;
+    int totalAbsen = hadir + terlambat + alfa;
+    
+    double progress = totalAbsen == 0 ? 0 : ((hadir + terlambat) / totalAbsen) * 100;
+    
+    String progressText = "Belum ada data kehadiran.";
+    if (totalAbsen > 0) {
+      if (progress >= 80) progressText = "Tingkat kehadiran Anda sangat baik! 🎉";
+      else if (progress >= 60) progressText = "Tingkat kehadiran Anda cukup baik. 👍";
+      else progressText = "Tingkat kehadiran Anda perlu ditingkatkan! ⚠️";
+    }
+
     return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
       bottomNavigationBar: BottomNav(
         currentIndex: _currentIndex,
         onTap: _onNavTapped,
@@ -53,29 +105,31 @@ class _DashboardPageState extends State<DashboardPage> {
               padding: const EdgeInsets.fromLTRB(20, 60, 20, 30),
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Color(0xFF2563EB), Color(0xFF3B82F6)],
+                  colors: [Color(0xFF2563EB), Color(0xFF4F46E5)],
                 ),
                 borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(30),
-                  bottomRight: Radius.circular(30),
+                  bottomLeft: Radius.circular(40),
+                  bottomRight: Radius.circular(40),
                 ),
               ),
-              child: const Column(
+              child: _isLoading 
+                ? const Center(child: CircularProgressIndicator(color: Colors.white))
+                : Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("Halo,", style: TextStyle(color: Colors.white70)),
-                  SizedBox(height: 5),
+                  const Text("Halo,", style: TextStyle(color: Colors.white70)),
+                  const SizedBox(height: 5),
                   Text(
-                    "Kelio Xenelly",
-                    style: TextStyle(
+                    _user?.name ?? "Nama Tidak Diketahui",
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   Text(
-                    "23110001 • Sistem Informasi",
-                    style: TextStyle(color: Colors.white70),
+                    "${_user?.identifier ?? '-'} • ${_user?.prodiName ?? '-'}",
+                    style: const TextStyle(color: Colors.white70),
                   ),
                 ],
               ),
@@ -93,22 +147,23 @@ class _DashboardPageState extends State<DashboardPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _buildStatCard("Hadir", 2, Colors.green),
-                      _buildStatCard("Terlambat", 1, Colors.orange),
-                      _buildStatCard("Alfa", 0, Colors.red),
+                      _buildStatCard("Hadir", hadir, Colors.green),
+                      _buildStatCard("Terlambat", terlambat, Colors.orange),
+                      _buildStatCard("Alfa", alfa, Colors.red),
                     ],
                   ),
 
                   const SizedBox(height: 20),
 
                   // 📈 PROGRESS
-                  const GlassCard(
+                  GlassCard(
                     child: Column(
                       children: [
-                        SizedBox(height: 10),
-                        ProgressRing(progress: 100),
-                        SizedBox(height: 10),
-                        Text("Tingkat kehadiran Anda sangat baik! 🎉"),
+                        const SizedBox(height: 10),
+                        // Assuming ProgressRing takes a double from 0 to 100
+                        ProgressRing(progress: progress),
+                        const SizedBox(height: 10),
+                        Text(progressText, textAlign: TextAlign.center),
                       ],
                     ),
                   ),
@@ -158,7 +213,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         ),
                         GestureDetector(
                           onTap: () {
-                            Navigator.pushNamed(context, '/riwayat');
+                            // Nanti navigasi ke riwayat lengkap
                           },
                           child: Row(
                             children: const [
@@ -179,9 +234,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
 
                   // 📋 RECENT
-                  _buildRecentItem("Pemrograman Web", "Hadir"),
-                  _buildRecentItem("Basis Data", "Hadir"),
-                  _buildRecentItem("Algoritma", "Terlambat"),
+                  _buildRecentList(),
 
                   const SizedBox(height: 80),
                 ],
@@ -190,6 +243,43 @@ class _DashboardPageState extends State<DashboardPage> {
           ],
         ),
       ),
+    );
+  }
+
+  // 🔹 RECENT LIST
+  Widget _buildRecentList() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_riwayat.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.all(20.0),
+        child: Text("Belum ada riwayat absensi."),
+      );
+    }
+
+    // Ambil maksimal 3 data terakhir
+    final recentItems = _riwayat.take(3).toList();
+
+    return Column(
+      children: recentItems.map((item) {
+        // Safe access to nested JSON properties
+        final sesi = item['sesi_absensi'] ?? {};
+        final pertemuan = sesi['pertemuan'] ?? {};
+        final kelas = pertemuan['kelas'] ?? {};
+        final mataKuliah = kelas['mata_kuliah'] ?? {};
+        
+        final namaMk = mataKuliah['nama_mk'] ?? 'Unknown MK';
+        
+        // Capitalize status
+        String status = item['status'] ?? 'Unknown';
+        if (status.isNotEmpty) {
+          status = status[0].toUpperCase() + status.substring(1);
+        }
+
+        return _buildRecentItem(namaMk, status);
+      }).toList(),
     );
   }
 
@@ -236,7 +326,7 @@ class _DashboardPageState extends State<DashboardPage> {
             Expanded(child: Text(matkul)),
             Text(
               status,
-              style: TextStyle(color: color),
+              style: TextStyle(color: color, fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -244,4 +334,3 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 }
-
