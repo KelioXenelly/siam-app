@@ -84,9 +84,13 @@ class _DashboardPageState extends State<DashboardPage> {
     
     String progressText = "Belum ada data kehadiran.";
     if (totalAbsen > 0) {
-      if (progress >= 80) progressText = "Tingkat kehadiran Anda sangat baik! 🎉";
-      else if (progress >= 60) progressText = "Tingkat kehadiran Anda cukup baik. 👍";
-      else progressText = "Tingkat kehadiran Anda perlu ditingkatkan! ⚠️";
+      if (progress >= 80) {
+        progressText = "Tingkat kehadiran Anda sangat baik! 🎉";
+      } else if (progress >= 60) {
+        progressText = "Tingkat kehadiran Anda cukup baik. 👍";
+      } else {
+        progressText = "Tingkat kehadiran Anda perlu ditingkatkan! ⚠️";
+      }
     }
 
     return Scaffold(

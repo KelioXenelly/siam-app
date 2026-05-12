@@ -26,15 +26,18 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _handleLogin() async {
-    if (_identifierController.text.isEmpty || _passwordController.text.isEmpty) {
+    if (_identifierController.text.isEmpty ||
+        _passwordController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text("Email/ID dan Password tidak boleh kosong"),
           backgroundColor: Colors.amber[800],
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsets.all(16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        )
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
       );
       return;
     }
@@ -43,8 +46,8 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       final user = await _authService.login(
-          _identifierController.text,
-          _passwordController.text
+        _identifierController.text,
+        _passwordController.text,
       );
 
       if (!mounted) return;
@@ -54,8 +57,11 @@ class _LoginPageState extends State<LoginPage> {
           await _authService.logout();
         } catch (_) {}
 
-        final formattedRole = user.role[0].toUpperCase() + user.role.substring(1);
-        throw Exception("Akun Anda terdaftar sebagai $formattedRole. Silakan pilih tab yang sesuai.");
+        final formattedRole =
+            user.role[0].toUpperCase() + user.role.substring(1);
+        throw Exception(
+          "Akun Anda terdaftar sebagai $formattedRole. Silakan pilih tab yang sesuai.",
+        );
       }
 
       if (user.role == 'mahasiswa') {
@@ -77,8 +83,10 @@ class _LoginPageState extends State<LoginPage> {
           backgroundColor: Colors.red[400],
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsets.all(16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        )
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
       );
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -106,7 +114,8 @@ class _LoginPageState extends State<LoginPage> {
                   child: Column(
                     children: [
                       Container(
-                        width: 90, height: 90,
+                        width: 90,
+                        height: 90,
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
                             colors: [Color(0xFF2563EB), Color(0xFF4F46E5)],
@@ -119,31 +128,43 @@ class _LoginPageState extends State<LoginPage> {
                               color: Colors.blue.withValues(alpha: 0.3),
                               blurRadius: 20,
                               offset: const Offset(0, 10),
-                            )
+                            ),
                           ],
                         ),
                         child: const Center(
                           child: Text(
-                            "S", 
+                            "S",
                             style: TextStyle(
-                              fontSize: 48, 
-                              fontWeight: FontWeight.w900, 
+                              fontSize: 48,
+                              fontWeight: FontWeight.w900,
                               color: Colors.white,
                               shadows: [
-                                Shadow(color: Colors.black26, offset: Offset(2, 2), blurRadius: 4)
-                              ]
-                            )
-                          )
+                                Shadow(
+                                  color: Colors.black26,
+                                  offset: Offset(2, 2),
+                                  blurRadius: 4,
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 20),
                       const Text(
-                        "Selamat Datang", 
-                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: -0.5)
+                        "Selamat Datang",
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: -0.5,
+                        ),
                       ),
                       const Text(
-                        "SIAM - Sistem Absensi Pintar", 
-                        style: TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w500)
+                        "SIAM - Sistem Absensi Pintar",
+                        style: TextStyle(
+                          color: Colors.grey,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                       const SizedBox(height: 32),
 
@@ -151,26 +172,32 @@ class _LoginPageState extends State<LoginPage> {
                         height: 50,
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
-                          color: Colors.grey[100], 
-                          borderRadius: BorderRadius.circular(16)
+                          color: Colors.grey[100],
+                          borderRadius: BorderRadius.circular(16),
                         ),
                         child: Stack(
                           children: [
                             AnimatedAlign(
                               duration: const Duration(milliseconds: 250),
                               curve: Curves.easeInOut,
-                              alignment: _role == 'mahasiswa' ? Alignment.centerLeft : Alignment.centerRight,
+                              alignment: _role == 'mahasiswa'
+                                  ? Alignment.centerLeft
+                                  : Alignment.centerRight,
                               child: Container(
-                                width: (MediaQuery.of(context).size.width - 100) / 2,
+                                width:
+                                    (MediaQuery.of(context).size.width - 100) /
+                                    2,
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(12),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withValues(alpha: 0.05),
+                                      color: Colors.black.withValues(
+                                        alpha: 0.05,
+                                      ),
                                       blurRadius: 4,
                                       offset: const Offset(0, 2),
-                                    )
+                                    ),
                                   ],
                                 ),
                               ),
@@ -186,14 +213,18 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(height: 28),
 
-                      _buildLabel(_role == 'mahasiswa' ? 'Email / NIM' : 'Email / NIDN'),
+                      _buildLabel(
+                        _role == 'mahasiswa' ? 'Email / NIM' : 'Email / NIDN',
+                      ),
                       TextField(
                         controller: _identifierController,
                         keyboardType: TextInputType.emailAddress,
                         textInputAction: TextInputAction.next,
                         decoration: _inputDecoration(
-                          _role == 'mahasiswa' ? 'Contoh: 23110001' : 'Contoh: nidn@kampus.ac.id',
-                          Icons.person_outline
+                          _role == 'mahasiswa'
+                              ? 'Contoh: 23110001'
+                              : 'Contoh: nidn@kampus.ac.id',
+                          Icons.person_outline,
                         ),
                       ),
                       const SizedBox(height: 18),
@@ -204,16 +235,24 @@ class _LoginPageState extends State<LoginPage> {
                         obscureText: _obscureText,
                         textInputAction: TextInputAction.done,
                         onSubmitted: (_) => _handleLogin(),
-                        decoration: _inputDecoration('••••••••', Icons.lock_outline).copyWith(
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _obscureText ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                              color: Colors.grey[400],
-                              size: 20,
+                        decoration:
+                            _inputDecoration(
+                              '••••••••',
+                              Icons.lock_outline,
+                            ).copyWith(
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _obscureText
+                                      ? Icons.visibility_off_outlined
+                                      : Icons.visibility_outlined,
+                                  color: Colors.grey[400],
+                                  size: 20,
+                                ),
+                                onPressed: () => setState(
+                                  () => _obscureText = !_obscureText,
+                                ),
+                              ),
                             ),
-                            onPressed: () => setState(() => _obscureText = !_obscureText),
-                          ),
-                        ),
                       ),
 
                       Align(
@@ -222,7 +261,10 @@ class _LoginPageState extends State<LoginPage> {
                           onPressed: () {},
                           style: TextButton.styleFrom(
                             foregroundColor: Colors.blue[700],
-                            textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)
+                            textStyle: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                           child: const Text("Lupa Password?"),
                         ),
@@ -238,17 +280,26 @@ class _LoginPageState extends State<LoginPage> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF2563EB),
                             foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
                             elevation: 0,
                           ),
                           child: _isLoading
                               ? const SizedBox(
-                                  width: 24, height: 24,
-                                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5)
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2.5,
+                                  ),
                                 )
                               : const Text(
-                                  "Masuk Sekarang", 
-                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)
+                                  "Masuk Sekarang",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
                                 ),
                         ),
                       ),
@@ -256,9 +307,13 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
                 const SizedBox(height: 32),
-                const Text(
-                  "© 2026 ITB STIKOM BALI",
-                  style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w500),
+                Text(
+                  "© ${DateTime.now().year} ITB Sabda Setia",
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ],
             ),
@@ -280,7 +335,7 @@ class _LoginPageState extends State<LoginPage> {
             style: TextStyle(
               color: isSelected ? Colors.blue[700] : Colors.grey[500],
               fontWeight: FontWeight.bold,
-              fontSize: 14
+              fontSize: 14,
             ),
             child: Text(label),
           ),
@@ -291,11 +346,18 @@ class _LoginPageState extends State<LoginPage> {
 
   Widget _buildLabel(String text) {
     return Align(
-      alignment: Alignment.centerLeft, 
+      alignment: Alignment.centerLeft,
       child: Padding(
-        padding: const EdgeInsets.only(bottom: 8, left: 4), 
-        child: Text(text, style: TextStyle(fontWeight: FontWeight.w600, color: Colors.blueGrey[800], fontSize: 13))
-      )
+        padding: const EdgeInsets.only(bottom: 8, left: 4),
+        child: Text(
+          text,
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            color: Colors.blueGrey[800],
+            fontSize: 13,
+          ),
+        ),
+      ),
     );
   }
 
@@ -307,12 +369,12 @@ class _LoginPageState extends State<LoginPage> {
       fillColor: Colors.grey[50],
       prefixIcon: Icon(icon, color: Colors.grey[400], size: 20),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16), 
-        borderSide: BorderSide(color: Colors.grey[200]!, width: 1.5)
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: Colors.grey[200]!, width: 1.5),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16), 
-        borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.8)
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.8),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
     );
