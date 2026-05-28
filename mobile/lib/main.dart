@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:mobile/core/services/storage_service.dart';
 import 'package:mobile/features/auth/presentation/pages/login_page.dart';
+import 'package:mobile/features/auth/presentation/pages/ubah_password_page.dart';
 import 'package:mobile/features/dosen/presentation/pages/dashboard_page.dart';
 import 'package:mobile/features/dosen/presentation/pages/kelas_page.dart';
 import 'package:mobile/features/dosen/presentation/pages/profile_page.dart';
 import 'package:mobile/features/mahasiswa/presentation/pages/dashboard_page.dart';
 import 'package:mobile/features/mahasiswa/presentation/pages/profile_page.dart';
+import 'package:mobile/features/mahasiswa/presentation/pages/kelas_page.dart';
+import 'package:mobile/features/mahasiswa/presentation/pages/riwayat_page.dart';
 
 void main() {
   // Ensure plugin services are initialized
@@ -38,8 +41,11 @@ class MyApp extends StatelessWidget {
       ),
       routes: {
         '/login': (context) => const LoginPage(),
+        '/ubah-password': (context) => const UbahPasswordPage(),
         // Mahasiswa Routes
         '/dashboard': (context) => const DashboardPage(),
+        '/kelas': (context) => const KelasPage(),
+        '/riwayat': (context) => const RiwayatPage(),
         '/profile': (context) => const ProfilePage(),
         // Dosen Routes
         '/dosen/dashboard': (context) => const DosenDashboardPage(),

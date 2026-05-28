@@ -213,14 +213,19 @@ class _DosenProfilePageState extends State<DosenProfilePage> {
 
                   const SizedBox(height: 10),
 
-                  GlassCard(
-                    child: Row(
-                      children: const [
-                        Icon(Icons.key, color: Colors.deepPurpleAccent),
-                        SizedBox(width: 10),
-                        Expanded(child: Text("Ubah Password")),
-                        Icon(Icons.chevron_right),
-                      ],
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pushNamed(context, '/ubah-password');
+                    },
+                    child: GlassCard(
+                      child: Row(
+                        children: const [
+                          Icon(Icons.key, color: Colors.deepPurpleAccent),
+                          SizedBox(width: 10),
+                          Expanded(child: Text("Ubah Password")),
+                          Icon(Icons.chevron_right),
+                        ],
+                      ),
                     ),
                   ),
 

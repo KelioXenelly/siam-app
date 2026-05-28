@@ -1021,7 +1021,7 @@ class KelasController extends Controller
         $kelas = Kelas::whereHas('mahasiswas', function ($query) use ($mahasiswa) {
             $query->where('mahasiswa_id', $mahasiswa->id);
         })
-            ->with('mataKuliah')
+            ->with(['mataKuliah', 'dosen.user'])
             ->get();
 
         if ($kelas->isEmpty()) {

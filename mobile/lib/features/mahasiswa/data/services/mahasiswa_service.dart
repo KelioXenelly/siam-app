@@ -41,4 +41,30 @@ class MahasiswaService {
       throw Exception('Terjadi kesalahan jaringan');
     }
   }
+
+  // 📸 SCAN QR & UPLOAD SELFIE
+  Future<Map<String, dynamic>> scanAbsensi({
+    required String token,
+    required double lat,
+    required double lng,
+    required String selfiePath,
+  }) async {
+    try {
+      final formData = FormData.fromMap({
+        'token': token,
+        'latitude_mahasiswa': lat,
+        'longitude_mahasiswa': lng,
+        'selfie_photo': await MultipartFile.fromFile(selfiePath, filename: 'selfie.jpg'),
+      });
+
+      final res = await _dio.post('/absensi/scan', data: formData);
+      return res.data;
+    } catch (e) {
+      if (e is DioException) {
+        final message = e.response?.data['message'] ?? e.response?.data['errors'] ?? 'Gagal memproses absensi';
+        throw Exception(message);
+      }
+      throw Exception('Terjadi kesalahan jaringan');
+    }
+  }
 }

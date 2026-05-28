@@ -47,11 +47,11 @@ class _ProfilePageState extends State<ProfilePage> {
         break;
 
       case 1:
-      // nanti scan
+        Navigator.pushReplacementNamed(context, '/kelas');
         break;
 
       case 2:
-      // nanti riwayat
+        Navigator.pushReplacementNamed(context, '/riwayat');
         break;
 
       case 3:
@@ -89,37 +89,16 @@ class _ProfilePageState extends State<ProfilePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
 
-                  /// 🔙 BACK + TITLE
-                  Row(
-                    children: [
-                      GestureDetector(
-                        onTap: () {
-                          if (Navigator.of(context).canPop()) {
-                              Navigator.of(context).pop();
-                            } else {
-                              Navigator.pushReplacementNamed(context, '/dashboard');
-                          }
-                        },
-                        child: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(Icons.arrow_back, color: Colors.white),
-                        ),
+                  /// 🏷️ TITLE
+                  const Center(
+                    child: Text(
+                      "Profil Saya",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
                       ),
-                      const SizedBox(width: 12),
-                      const Text(
-                        "Profile",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      )
-                    ],
+                    ),
                   ),
 
                   const SizedBox(height: 20),
@@ -135,7 +114,16 @@ class _ProfilePageState extends State<ProfilePage> {
                           shape: BoxShape.circle,
                           border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
                         ),
-                        child: const Icon(Icons.person, size: 40, color: Colors.white),
+                        child: Center(
+                          child: Text(
+                            _getInitials(_user?.name ?? ""),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 32,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
                       ),
                       const SizedBox(width: 16),
                       if (_isLoading)
@@ -219,14 +207,19 @@ class _ProfilePageState extends State<ProfilePage> {
 
                   const SizedBox(height: 10),
 
-                  GlassCard(
-                    child: Row(
-                      children: const [
-                        Icon(Icons.key, color: Colors.blue),
-                        SizedBox(width: 10),
-                        Expanded(child: Text("Ubah Password")),
-                        Icon(Icons.chevron_right),
-                      ],
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pushNamed(context, '/ubah-password');
+                    },
+                    child: GlassCard(
+                      child: Row(
+                        children: const [
+                          Icon(Icons.key, color: Colors.blue),
+                          SizedBox(width: 10),
+                          Expanded(child: Text("Ubah Password")),
+                          Icon(Icons.chevron_right),
+                        ],
+                      ),
                     ),
                   ),
 
@@ -307,5 +300,14 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _divider() {
     return const Divider(height: 1);
+  }
+
+  String _getInitials(String name) {
+    if (name.isEmpty) return "??";
+    List<String> parts = name.trim().split(" ");
+    if (parts.length > 1) {
+      return "${parts[0][0]}${parts[1][0]}".toUpperCase();
+    }
+    return parts[0].substring(0, parts[0].length >= 2 ? 2 : 1).toUpperCase();
   }
 }

@@ -5,6 +5,7 @@ import 'package:mobile/features/mahasiswa/data/services/mahasiswa_service.dart';
 import 'package:mobile/shared/widgets/mahasiswa/glass_card.dart';
 import 'package:mobile/shared/widgets/mahasiswa/progress_ring.dart';
 import 'package:mobile/shared/widgets/mahasiswa/bottom_nav.dart';
+import 'package:mobile/features/mahasiswa/presentation/pages/scan_page.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -59,11 +60,11 @@ class _DashboardPageState extends State<DashboardPage> {
         break;
 
       case 1:
-      // nanti scan
+        Navigator.pushReplacementNamed(context, '/kelas');
         break;
 
       case 2:
-      // nanti riwayat
+        Navigator.pushReplacementNamed(context, '/riwayat');
         break;
 
       case 3:
@@ -99,9 +100,13 @@ class _DashboardPageState extends State<DashboardPage> {
         currentIndex: _currentIndex,
         onTap: _onNavTapped,
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
+      body: RefreshIndicator(
+        onRefresh: _loadData,
+        color: const Color(0xFF2563EB),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            children: [
 
             // 🔵 HEADER
             Container(
@@ -116,27 +121,53 @@ class _DashboardPageState extends State<DashboardPage> {
                   bottomRight: Radius.circular(40),
                 ),
               ),
-              child: _isLoading 
+                child: _isLoading 
                 ? const Center(child: CircularProgressIndicator(color: Colors.white))
-                : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text("Halo,", style: TextStyle(color: Colors.white70)),
-                  const SizedBox(height: 5),
-                  Text(
-                    _user?.name ?? "Nama Tidak Diketahui",
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text("Halo,", style: TextStyle(color: Colors.white70)),
+                            const SizedBox(height: 5),
+                            Text(
+                              _user?.name ?? "Nama Tidak Diketahui",
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              "${_user?.identifier ?? '-'} • ${_user?.prodiName ?? '-'}",
+                              style: const TextStyle(color: Colors.white70),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        width: 50,
+                        height: 50,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+                        ),
+                        child: Center(
+                          child: Text(
+                            _getInitials(_user?.name ?? ""),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  Text(
-                    "${_user?.identifier ?? '-'} • ${_user?.prodiName ?? '-'}",
-                    style: const TextStyle(color: Colors.white70),
-                  ),
-                ],
-              ),
             ),
 
             const SizedBox(height: 16),
@@ -175,28 +206,47 @@ class _DashboardPageState extends State<DashboardPage> {
                   const SizedBox(height: 20),
 
                   // 📷 SCAN BUTTON
-                  Container(
-                    width: double.infinity,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF2563EB), Color(0xFF4F46E5)],
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.blue.withValues(alpha: 0.3),
-                          blurRadius: 10,
-                        )
-                      ],
-                    ),
-                    child: const Center(
-                      child: Text(
-                        "Scan QR Code 🔥",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const ScanPage()),
+                      ).then((val) {
+                        // Refresh riwayat jika val == true (berhasil absen)
+                        if (val == true) {
+                          _loadData();
+                        }
+                      });
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF2563EB), Color(0xFF4F46E5)],
                         ),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.blue.withValues(alpha: 0.3),
+                            blurRadius: 10,
+                          )
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Icon(Icons.qr_code_scanner, color: Colors.white),
+                          SizedBox(width: 10),
+                          Text(
+                            "Scan Presensi Sekarang",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -217,7 +267,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         ),
                         GestureDetector(
                           onTap: () {
-                            // Nanti navigasi ke riwayat lengkap
+                            Navigator.pushReplacementNamed(context, '/riwayat');
                           },
                           child: Row(
                             children: const [
@@ -246,6 +296,7 @@ class _DashboardPageState extends State<DashboardPage> {
             )
           ],
         ),
+      ),
       ),
     );
   }
@@ -336,5 +387,14 @@ class _DashboardPageState extends State<DashboardPage> {
         ),
       ),
     );
+  }
+
+  String _getInitials(String name) {
+    if (name.isEmpty) return "??";
+    List<String> parts = name.trim().split(" ");
+    if (parts.length > 1) {
+      return "${parts[0][0]}${parts[1][0]}".toUpperCase();
+    }
+    return parts[0].substring(0, parts[0].length >= 2 ? 2 : 1).toUpperCase();
   }
 }

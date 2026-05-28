@@ -68,6 +68,27 @@ class AuthService {
     }
   }
 
+  // 🔑 UBAH PASSWORD
+  Future<void> changePassword({required String oldPassword, required String newPassword}) async {
+    try {
+      await _dio.post(
+        '/change-password',
+        data: {
+          'oldPassword': oldPassword,
+          'newPassword': newPassword,
+        },
+      );
+    } catch (e) {
+      if (e is DioException) {
+        final data = e.response?.data;
+        if (data != null && data['message'] != null) {
+          throw Exception(data['message']);
+        }
+      }
+      throw Exception('Gagal mengubah password');
+    }
+  }
+
   // 🚪 LOGOUT
   Future<void> logout() async {
     try {

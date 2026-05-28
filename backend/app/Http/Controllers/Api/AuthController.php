@@ -145,7 +145,7 @@ class AuthController extends Controller
     )]
     public function me(Request $request)
     {
-        return response()->json($request->user()->load('mahasiswa', 'dosen'));
+        return response()->json($request->user()->load('mahasiswa.prodi', 'dosen'));
     }
 
     #[OA\Post(

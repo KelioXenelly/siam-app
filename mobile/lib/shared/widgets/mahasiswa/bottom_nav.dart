@@ -24,8 +24,8 @@ class BottomNav extends StatelessWidget {
           label: "Home",
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.qr_code_scanner),
-          label: "Scan",
+          icon: Icon(Icons.book),
+          label: "Kelas",
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.history),
