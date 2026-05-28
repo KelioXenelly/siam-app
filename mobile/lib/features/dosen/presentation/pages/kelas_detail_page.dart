@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mobile/features/dosen/data/services/dosen_service.dart';
 import 'package:mobile/shared/widgets/dosen/bottom_nav.dart';
+import 'package:mobile/features/dosen/presentation/pages/sesi_page.dart';
 
 class DosenDetailKelasPage extends StatefulWidget {
   final int kelasId;
@@ -54,6 +55,98 @@ class _DosenDetailKelasPageState extends State<DosenDetailKelasPage> {
         });
       }
     }
+  }
+
+  Future<void> _startMeetingAndNavigate(dynamic m) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Text("Mulai Sesi Pertemuan?", style: TextStyle(fontWeight: FontWeight.bold)),
+        content: Text("Apakah Anda yakin ingin memulai '${m['topik'] ?? "Pertemuan ${m['pertemuan_ke']}"}' sekarang?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Batal", style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF7C3AED),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text("Mulai"),
+          )
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+    if (!mounted) return;
+
+    // Show loading overlay
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      // 1. Call API startPertemuan
+      final startRes = await _dosenService.startPertemuan(m['id']);
+      
+      // Close loading dialog
+      if (mounted) Navigator.pop(context);
+
+      if (startRes['success'] == true) {
+        // Refresh the local meetings list
+        _loadMeetings();
+
+        // 2. Navigate to Sesi Page
+        if (mounted) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => DosenSesiPage(
+                pertemuanId: m['id'],
+                kelasId: widget.kelasId,
+                namaMataKuliah: widget.namaMataKuliah,
+                topikPertemuan: m['topik'] ?? "Pertemuan ke-${m["pertemuan_ke"]}",
+                kodeKelas: widget.kodeKelas,
+                semester: widget.semester,
+                tahunAjaran: widget.tahunAjaran,
+              ),
+            ),
+          ).then((val) {
+            if (val == true) {
+              _loadMeetings();
+            }
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) Navigator.pop(context); // Close loading dialog
+      _showErrorDialog(e.toString().replaceAll("Exception: ", ""));
+    }
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Text("Gagal", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+        content: Text(message),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+            child: const Text("OK"),
+          )
+        ],
+      ),
+    );
   }
 
   int get _completedCount => _meetings.where((m) => m['status'] == 'Selesai').length;
@@ -351,28 +444,54 @@ class _DosenDetailKelasPageState extends State<DosenDetailKelasPage> {
               child: const Text("Selesai", style: TextStyle(color: Colors.green)),
             )
           else
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                gradient: isBerlangsung ? null : const LinearGradient(
-                  colors: [Color(0xFF7C3AED), Color(0xFF6366F1)],
+            GestureDetector(
+              onTap: () {
+                if (isBerlangsung) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => DosenSesiPage(
+                        pertemuanId: m['id'],
+                        kelasId: widget.kelasId,
+                        namaMataKuliah: widget.namaMataKuliah,
+                        topikPertemuan: m['topik'] ?? "Pertemuan ke-${m["pertemuan_ke"]}",
+                        kodeKelas: widget.kodeKelas,
+                        semester: widget.semester,
+                        tahunAjaran: widget.tahunAjaran,
+                      ),
+                    ),
+                  ).then((val) {
+                    if (val == true) {
+                      _loadMeetings();
+                    }
+                  });
+                } else {
+                  _startMeetingAndNavigate(m);
+                }
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  gradient: isBerlangsung ? null : const LinearGradient(
+                    colors: [Color(0xFF7C3AED), Color(0xFF6366F1)],
+                  ),
+                  color: isBerlangsung ? Colors.blueAccent : null,
+                  borderRadius: const BorderRadius.all(Radius.circular(12)),
                 ),
-                color: isBerlangsung ? Colors.blueAccent : null,
-                borderRadius: const BorderRadius.all(Radius.circular(12)),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    isBerlangsung ? Icons.door_front_door : Icons.qr_code, 
-                    color: Colors.white, 
-                    size: 16
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    isBerlangsung ? "Masuk" : "Mulai", 
-                    style: const TextStyle(color: Colors.white)
-                  ),
-                ],
+                child: Row(
+                  children: [
+                    Icon(
+                      isBerlangsung ? Icons.door_front_door : Icons.qr_code, 
+                      color: Colors.white, 
+                      size: 16
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      isBerlangsung ? "Masuk" : "Mulai", 
+                      style: const TextStyle(color: Colors.white)
+                    ),
+                  ],
+                ),
               ),
             )
         ],

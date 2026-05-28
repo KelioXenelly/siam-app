@@ -194,11 +194,10 @@ class _DosenKelasPageState extends State<DosenKelasPage> {
     final semester = course['semester'] ?? '-';
     final tahunAjaran = course['tahun_ajaran'] ?? '-';
     
-    // Dari data dummy di design, kita bisa asumsikan mahasiswa = kapasitas (sementara), dsb.
-    // Atau ambil dari panjang array mahasiswas jika ada.
     final totalMahasiswa = (course['mahasiswas'] as List?)?.length ?? 0;
-    // Pertemuan bisa dicek kalau ada count, tapi API dasar belum menyediakan jumlah pertemuan selesai.
-    // Kita biarkan 0 dulu / tidak tampil stat detail. Kita tampilkan info dasar saja dulu.
+    final pertemuans = course['pertemuans'] as List?;
+    final totalPertemuan = pertemuans?.length ?? 16;
+    final pertemuanSelesai = pertemuans?.where((p) => p['status'] == 'Selesai').length ?? 0;
 
     return GestureDetector(
       onTap: () {
@@ -273,9 +272,9 @@ class _DosenKelasPageState extends State<DosenKelasPage> {
               children: [
                 Expanded(child: _statBox("$totalMahasiswa", "Mahasiswa", Colors.purple)),
                 const SizedBox(width: 10),
-                Expanded(child: _statBox("16", "Total", Colors.blue)), // Standard pertemuan adalah 16
+                Expanded(child: _statBox("$totalPertemuan", "Total", Colors.blue)),
                 const SizedBox(width: 10),
-                Expanded(child: _statBox("?", "Selesai", Colors.green)), // Belum ada API aggregasi selesai
+                Expanded(child: _statBox("$pertemuanSelesai", "Selesai", Colors.green)),
               ],
             ),
 

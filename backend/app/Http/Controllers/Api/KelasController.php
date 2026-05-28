@@ -832,7 +832,7 @@ class KelasController extends Controller
         $dosen = $request->user()->dosen;
 
         $kelas = Kelas::where('dosen_id', $dosen->id)
-            ->with('mataKuliah')
+            ->with(['mataKuliah', 'mahasiswas', 'pertemuans'])
             ->get();
 
         if ($kelas->isEmpty()) {
