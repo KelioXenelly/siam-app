@@ -6,6 +6,7 @@ import 'package:mobile/shared/widgets/mahasiswa/glass_card.dart';
 import 'package:mobile/shared/widgets/mahasiswa/progress_ring.dart';
 import 'package:mobile/shared/widgets/mahasiswa/bottom_nav.dart';
 import 'package:mobile/features/mahasiswa/presentation/pages/scan_page.dart';
+import 'package:mobile/shared/widgets/shimmer_loading.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -173,10 +174,13 @@ class _DashboardPageState extends State<DashboardPage> {
             const SizedBox(height: 16),
 
             // 🔥 CONTENT
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                children: [
+            if (_isLoading)
+              const DashboardShimmer()
+            else
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  children: [
 
                   // 📊 STATS
                   Row(

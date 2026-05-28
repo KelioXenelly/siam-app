@@ -4,6 +4,7 @@ class User {
   final String email;
   final String role;
   final bool isActive;
+  final String? avatar;
   final String? identifier; // NIM or NIDN
   final String? prodiName; // For Mahasiswa
 
@@ -13,6 +14,7 @@ class User {
     required this.email,
     required this.role,
     required this.isActive,
+    this.avatar,
     this.identifier,
     this.prodiName,
   });
@@ -34,6 +36,7 @@ class User {
       email: json['email'],
       role: json['role'],
       isActive: json['is_active'] == 1 || json['is_active'] == true,
+      avatar: json['avatar'],
       identifier: idf,
       prodiName: prodi,
     );

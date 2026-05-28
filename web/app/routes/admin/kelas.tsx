@@ -1,5 +1,12 @@
 import React, { use, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
+
+export function meta() {
+  return [
+    { title: "Manajemen Kelas | SIAM Admin" },
+    { name: "description", content: "Kelola data kelas perkuliahan SIAM." },
+  ];
+}
 import {
   Plus,
   Search,
@@ -16,7 +23,7 @@ import {
   MapPin,
 } from "lucide-react";
 import { toast } from "sonner";
-import { useTable } from "../../hooks/useTable";
+import { useServerTable } from "../../hooks/useServerTable";
 import { Pagination, SortableHeader } from "../../components/table_features";
 import type { Kelas } from "~/types/kelas";
 import type { Mahasiswa } from "~/types/mahasiswa";
@@ -30,9 +37,6 @@ export default function KelasPage() {
   const [dosenList, setDosenList] = useState<Dosen[]>([]);
   const [mataKuliahList, setMataKuliahList] = useState<MataKuliah[]>([]);
   const [ruanganList, setRuanganList] = useState<Ruangan[]>([]);
-  const [kelasList, setKelasList] = useState<Kelas[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -48,31 +52,25 @@ export default function KelasPage() {
 
   const [formData, setFormData] = useState<Partial<Kelas>>({});
 
-  const filteredData = kelasList.filter(
-    (k) =>
-      k.kode_kelas.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      k.mata_kuliah?.nama_mk.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      k.dosen?.user?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      k.ruangan?.nama.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      k.hari.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      k.jam_mulai.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      k.jam_selesai.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      k.kapasitas.toString().includes(searchTerm.toString()),
-  );
-
   const {
     currentData,
     currentPage,
     setCurrentPage,
     totalPages,
-    requestSort,
-    sortConfig,
     totalItems,
-  } = useTable(filteredData, itemsPerPage);
+    itemsPerPage,
+    setItemsPerPage,
+    searchTerm,
+    setSearchTerm,
+    sortConfig,
+    requestSort,
+    isLoading,
+    refreshData
+  } = useServerTable<Kelas>("/kelas", 10);
 
   const handleItemsPerPageChange = (value: number) => {
     setItemsPerPage(value);
-    setCurrentPage(1); // ❗ reset biar gak out of range
+    setCurrentPage(1);
   };
 
   const handleOpenModal = (
@@ -141,7 +139,7 @@ export default function KelasPage() {
 
       try {
         await api.post("/kelas", newKelas);
-        await fetchKelas();
+        await refreshData();
         toast.success("Kelas berhasil ditambahkan!");
       } catch (error: any) {
         const errors = error.response?.data?.errors;
@@ -169,7 +167,7 @@ export default function KelasPage() {
 
       try {
         await api.put(`/kelas/${selectedKelas.id}`, updatedKelas);
-        await fetchKelas();
+        await refreshData();
         toast.success("Kelas berhasil diperbarui!");
       } catch (error: any) {
         const errors = error.response?.data?.errors;
@@ -189,7 +187,7 @@ export default function KelasPage() {
 
     try {
       await api.delete(`/kelas/${selectedKelas.id}`);
-      await fetchKelas();
+      await refreshData();
       toast.success("Kelas berhasil dihapus!");
       handleCloseModal();
     } catch (error: any) {
@@ -215,7 +213,7 @@ export default function KelasPage() {
         mahasiswa_ids: assignedStudents,
       });
       toast.success("Mahasiswa berhasil ditugaskan ke kelas!");
-      await fetchKelas();
+      await refreshData();
       setIsAssignModalOpen(false);
     } catch (error: any) {
       const errors = error.response?.data?.errors;
@@ -241,21 +239,6 @@ export default function KelasPage() {
         .includes(assignSearchTerm.toLowerCase()) ||
       m.nim.includes(assignSearchTerm),
   );
-
-  const fetchKelas = async () => {
-    try {
-      const res = await api.get("/kelas");
-      setKelasList(res.data.data);
-    } catch (error: any) {
-      const errors = error.response?.data?.errors;
-
-      if (errors) {
-        toast.error(errors[0]);
-      } else {
-        toast.error("Gagal mengambil data kelas.");
-      }
-    }
-  };
 
   useEffect(() => {
     const fetchMahasiswa = async () => {
@@ -319,7 +302,6 @@ export default function KelasPage() {
     fetchDosen();
     fetchMataKuliah();
     fetchRuangan();
-    fetchKelas();
   }, []);
 
   return (

@@ -68,53 +68,38 @@ class _DosenKelasPageState extends State<DosenKelasPage> {
         currentIndex: _currentIndex,
         onTap: _onNavTapped,
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
+      body: RefreshIndicator(
+        onRefresh: _loadKelas,
+        color: const Color(0xFF7C3AED),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            children: [
 
-            // 🔵 HEADER
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(20, 60, 20, 30),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFF7C3AED), Color(0xFF4F46E5)],
-                ),
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(40),
-                  bottomRight: Radius.circular(40),
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.pushReplacementNamed(context, '/dosen/dashboard');
-                        },
-                        child: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(Icons.arrow_back, color: Colors.white),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      const Text(
-                        "Kelas Saya",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      )
-                    ],
+              // 🔵 HEADER
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(20, 60, 20, 30),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF7C3AED), Color(0xFF4F46E5)],
                   ),
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(40),
+                    bottomRight: Radius.circular(40),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Kelas Saya",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   const SizedBox(height: 10),
                   _isLoading 
                       ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
@@ -137,6 +122,7 @@ class _DosenKelasPageState extends State<DosenKelasPage> {
             const SizedBox(height: 80),
           ],
         ),
+      ),
       ),
     );
   }
@@ -174,9 +160,34 @@ class _DosenKelasPageState extends State<DosenKelasPage> {
     }
 
     if (_courses.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.all(40.0),
-        child: Center(child: Text('Belum ada kelas yang ditugaskan kepada Anda.')),
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 60, horizontal: 20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Column(
+          children: [
+            Icon(Icons.class_outlined, size: 80, color: Colors.indigo.withValues(alpha: 0.2)),
+            const SizedBox(height: 24),
+            const Text(
+              "Belum Ada Kelas",
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1E293B),
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              "Anda belum memiliki jadwal mengajar pada semester aktif ini.",
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey, fontSize: 15, height: 1.5),
+            ),
+          ],
+        ),
       );
     }
 

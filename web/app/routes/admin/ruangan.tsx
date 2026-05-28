@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
+
+export function meta() {
+  return [
+    { title: "Manajemen Ruangan | SIAM Admin" },
+    { name: "description", content: "Kelola data ruangan kelas SIAM." },
+  ];
+}
 import {
   Plus,
   Search,

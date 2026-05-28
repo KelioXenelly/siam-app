@@ -1,5 +1,12 @@
 import { useState, useEffect } from "react";
 import api from "~/lib/api";
+
+export function meta() {
+  return [
+    { title: "Dashboard | SIAM Admin" },
+    { name: "description", content: "Ringkasan statistik akademik SIAM." },
+  ];
+}
 import AuthGuard from "~/components/auth_guard";
 import { 
   Users, 
@@ -13,6 +20,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { motion } from 'motion/react';
+import { Link } from 'react-router';
 import type { Activity } from "~/types/activity";
 
 import { 
@@ -128,9 +136,6 @@ export default function DashboardPage() {
                   <div className={`p-3 rounded-xl ${card.color} shadow-sm`}>
                     <Icon className="w-6 h-6" />
                   </div>
-                  <button className="text-slate-400 hover:text-slate-600">
-                    <MoreVertical className="w-5 h-5" />
-                  </button>
                 </div>
 
                 <div className="relative z-10">
@@ -160,7 +165,7 @@ export default function DashboardPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.4 }}
-            className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col min-h-[400px]"
+            className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col min-h-100"
           >
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-lg font-semibold text-slate-800">
@@ -177,7 +182,7 @@ export default function DashboardPage() {
               </select>
             </div>
 
-            <div className="flex-1 w-full h-[300px]">
+            <div className="flex-1 w-full h-75">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <defs>
@@ -231,9 +236,9 @@ export default function DashboardPage() {
               <h2 className="text-lg font-semibold text-slate-800">
                 Aktivitas Terbaru
               </h2>
-              <button className="text-blue-600 text-sm font-medium hover:text-blue-700">
+              <Link to="/admin/activity-logs" className="text-blue-600 text-sm font-medium hover:text-blue-700">
                 Lihat Semua
-              </button>
+              </Link>
             </div>
 
             <div className="flex flex-col gap-5 relative">

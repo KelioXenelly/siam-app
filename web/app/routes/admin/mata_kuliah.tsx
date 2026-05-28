@@ -10,6 +10,13 @@ import {
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
+
+export function meta() {
+  return [
+    { title: "Mata Kuliah | SIAM Admin" },
+    { name: "description", content: "Kelola data mata kuliah SIAM." },
+  ];
+}
 import { toast } from "sonner";
 import { Pagination, SortableHeader } from "~/components/table_features";
 import { useTable } from "~/hooks/useTable";

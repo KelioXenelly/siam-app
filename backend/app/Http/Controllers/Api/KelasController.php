@@ -121,21 +121,35 @@ class KelasController extends Controller
             )
         ]
     )]
-    public function index()
+    public function index(Request $request)
     {
-        $kelas = Kelas::with([
+        $search = $request->query('search');
+        $perPage = $request->query('per_page', 15);
+        $sortKey = $request->query('sort_key', 'kode_kelas');
+        $sortDir = $request->query('sort_dir', 'asc');
+
+        $query = Kelas::with([
             'mataKuliah',
             'dosen.user',
             'mahasiswas.user',
             'ruangan'
-        ])->orderBy('kode_kelas', 'asc')->get();
+        ]);
 
-        if ($kelas->isEmpty()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Data kelas tidak ditemukan',
-            ]);
+        if ($search) {
+            $query->where('kode_kelas', 'like', "%{$search}%")
+                  ->orWhere('tahun_ajaran', 'like', "%{$search}%")
+                  ->orWhereHas('mataKuliah', function($q) use ($search) {
+                      $q->where('nama_mk', 'like', "%{$search}%");
+                  });
         }
+
+        if (in_array($sortKey, ['kode_kelas', 'tahun_ajaran', 'semester', 'created_at'])) {
+            $query->orderBy($sortKey, $sortDir);
+        } else {
+            $query->orderBy('kode_kelas', 'asc');
+        }
+
+        $kelas = $query->paginate($perPage);
 
         return response()->json([
             'success' => true,

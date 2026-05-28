@@ -18,9 +18,13 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      // Handle unauthorized access, e.g., redirect to login page
+      // Handle unauthorized access
       localStorage.removeItem("token");
-      window.location.href = "/login";
+      
+      // Prevent full page refresh if the user is already on the login page
+      if (window.location.pathname !== "/login") {
+        window.location.href = "/login";
+      }
     }
     
     return Promise.reject(error);

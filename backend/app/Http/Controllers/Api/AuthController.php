@@ -995,4 +995,82 @@ class AuthController extends Controller
             ]
         ]);
     }
+
+    public function updateAvatar(Request $request)
+    {
+        $request->validate([
+            'avatar' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048'
+        ]);
+
+        $user = $request->user();
+
+        if ($request->hasFile('avatar')) {
+            // Hapus avatar lama jika ada
+            if ($user->avatar) {
+                $oldPath = str_replace('/storage/', '', $user->avatar);
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($oldPath);
+            }
+
+            $file = $request->file('avatar');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $path = $file->storeAs('avatars', $filename, 'public');
+
+            $user->avatar = '/storage/' . $path;
+            $user->save();
+
+            // Memuat relasi agar kembalian user lengkap
+            if ($user->role === 'mahasiswa') {
+                $user->load('mahasiswa.prodi');
+            } elseif ($user->role === 'dosen') {
+                $user->load('dosen');
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Avatar berhasil diperbarui',
+                'user' => $user
+            ]);
+        }
+
+        return response()->json(['success' => false, 'message' => 'Gagal mengunggah file'], 400);
+    }
+
+    public function updateUserAvatar(Request $request, $user_id)
+    {
+        $user = User::findOrFail($user_id);
+
+        $request->validate([
+            'avatar' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048'
+        ]);
+
+        if ($request->hasFile('avatar')) {
+            // Hapus avatar lama jika ada
+            if ($user->avatar) {
+                $oldPath = str_replace('/storage/', '', $user->avatar);
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($oldPath);
+            }
+
+            $file = $request->file('avatar');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $path = $file->storeAs('avatars', $filename, 'public');
+
+            $user->avatar = '/storage/' . $path;
+            $user->save();
+
+            // Memuat relasi
+            if ($user->role === 'mahasiswa') {
+                $user->load('mahasiswa.prodi');
+            } elseif ($user->role === 'dosen') {
+                $user->load('dosen');
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Avatar pengguna berhasil diperbarui',
+                'data' => $user
+            ]);
+        }
+
+        return response()->json(['success' => false, 'message' => 'Gagal mengunggah file'], 400);
+    }
 }

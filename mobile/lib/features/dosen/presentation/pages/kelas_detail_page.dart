@@ -175,8 +175,12 @@ class _DosenDetailKelasPageState extends State<DosenDetailKelasPage> {
         currentIndex: _currentIndex,
         onTap: _onNavTapped,
       ),
-      body: SingleChildScrollView(
-        child: Column(
+      body: RefreshIndicator(
+        onRefresh: _loadMeetings,
+        color: const Color(0xFF7C3AED),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
           children: [
 
             // 🔵 HEADER
@@ -309,6 +313,7 @@ class _DosenDetailKelasPageState extends State<DosenDetailKelasPage> {
 
             const SizedBox(height: 80),
           ],
+          ),
         ),
       ),
     );
@@ -335,9 +340,35 @@ class _DosenDetailKelasPageState extends State<DosenDetailKelasPage> {
     }
 
     if (_meetings.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.all(20),
-        child: Center(child: Text("Belum ada pertemuan terjadwal untuk kelas ini.")),
+      return Container(
+        width: double.infinity,
+        margin: const EdgeInsets.only(top: 20),
+        padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Column(
+          children: [
+            Icon(Icons.calendar_today_outlined, size: 70, color: Colors.blueAccent.withValues(alpha: 0.2)),
+            const SizedBox(height: 20),
+            const Text(
+              "Belum Ada Sesi",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1E293B),
+              ),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              "Jadwal pertemuan untuk kelas ini belum tersedia.",
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey, fontSize: 14),
+            ),
+          ],
+        ),
       );
     }
 

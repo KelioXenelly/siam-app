@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:mobile/core/network/dio_client.dart';
 import 'package:mobile/core/services/storage_service.dart';
@@ -101,6 +102,32 @@ class AuthService {
       // 2. Clear ALL local storage (Token, Role, etc.)
       // This ensures the app is in a clean state even if the API call fails
       await StorageService.removeAll();
+    }
+  }
+
+  // 📸 UPLOAD AVATAR
+  Future<User> uploadAvatar(File file) async {
+    try {
+      String fileName = file.path.split('/').last;
+      
+      FormData formData = FormData.fromMap({
+        "avatar": await MultipartFile.fromFile(file.path, filename: fileName),
+      });
+      
+      final res = await _dio.post(
+        '/update-avatar',
+        data: formData,
+      );
+      
+      return User.fromJson(res.data['user']);
+    } catch (e) {
+      if (e is DioException) {
+        final data = e.response?.data;
+        if (data != null && data['message'] != null) {
+          throw Exception(data['message']);
+        }
+      }
+      throw Exception('Gagal mengunggah foto profil');
     }
   }
 }

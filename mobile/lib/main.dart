@@ -10,6 +10,8 @@ import 'package:mobile/features/mahasiswa/presentation/pages/profile_page.dart';
 import 'package:mobile/features/mahasiswa/presentation/pages/kelas_page.dart';
 import 'package:mobile/features/mahasiswa/presentation/pages/riwayat_page.dart';
 
+final GlobalKey<NavigatorState> globalNavigatorKey = GlobalKey<NavigatorState>();
+
 void main() {
   // Ensure plugin services are initialized
   WidgetsFlutterBinding.ensureInitialized();
@@ -33,6 +35,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: globalNavigatorKey,
       title: 'SIAM',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(

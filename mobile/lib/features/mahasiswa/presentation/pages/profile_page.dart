@@ -1,4 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:mobile/core/constants/api_constants.dart';
 import 'package:mobile/features/auth/data/models/user_model.dart';
 import 'package:mobile/features/auth/data/services/auth_service.dart';
 import 'package:mobile/shared/widgets/mahasiswa/bottom_nav.dart';
@@ -35,6 +38,30 @@ class _ProfilePageState extends State<ProfilePage> {
       }
     } catch (e) {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _uploadAvatar() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+    
+    if (image != null) {
+      setState(() => _isLoading = true);
+      try {
+        final updatedUser = await _authService.uploadAvatar(File(image.path));
+        if (mounted) {
+          setState(() {
+            _user = updatedUser;
+            _isLoading = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Foto profil berhasil diperbarui!')));
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() => _isLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceAll("Exception: ", ""))));
+        }
+      }
     }
   }
 
@@ -106,23 +133,46 @@ class _ProfilePageState extends State<ProfilePage> {
                   /// 👤 PROFILE INFO
                   Row(
                     children: [
-                      Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
-                        ),
-                        child: Center(
-                          child: Text(
-                            _getInitials(_user?.name ?? ""),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
+                      GestureDetector(
+                        onTap: _isLoading ? null : _uploadAvatar,
+                        child: Stack(
+                          alignment: Alignment.bottomRight,
+                          children: [
+                            Container(
+                              width: 80,
+                              height: 80,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.2),
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+                                image: (_user?.avatar != null)
+                                    ? DecorationImage(
+                                        image: NetworkImage(ApiConstants.baseUrl.replaceAll('/api', '') + _user!.avatar!),
+                                        fit: BoxFit.cover,
+                                      )
+                                    : null,
+                              ),
+                              child: (_user?.avatar == null)
+                                  ? Text(
+                                      _getInitials(_user?.name ?? ""),
+                                      style: const TextStyle(
+                                        fontSize: 32,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : null,
                             ),
-                          ),
+                            Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.camera_alt, size: 16, color: Color(0xFF2563EB)),
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(width: 16),

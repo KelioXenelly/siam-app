@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:mobile/features/auth/data/models/user_model.dart';
 import 'package:mobile/features/auth/data/services/auth_service.dart';
+import 'package:mobile/features/dosen/data/services/dosen_service.dart';
 import 'package:mobile/shared/widgets/dosen/bottom_nav.dart';
+import 'package:mobile/shared/widgets/shimmer_loading.dart';
 
 class DosenDashboardPage extends StatefulWidget {
   const DosenDashboardPage({super.key});
@@ -13,8 +15,12 @@ class DosenDashboardPage extends StatefulWidget {
 class _DosenDashboardPageState extends State<DosenDashboardPage> {
   final _currentIndex = 0;
   final AuthService _authService = AuthService();
+  final DosenService _dosenService = DosenService();
+  
   User? _user;
   bool _isLoading = true;
+  List<dynamic> _courses = [];
+  int _activeSessions = 0;
 
   @override
   void initState() {
@@ -23,17 +29,44 @@ class _DosenDashboardPageState extends State<DosenDashboardPage> {
   }
 
   Future<void> _loadUserData() async {
+    setState(() => _isLoading = true);
     try {
-      final user = await _authService.getMe();
+      // Run both API calls concurrently for faster loading
+      final responses = await Future.wait([
+        _authService.getMe(),
+        _dosenService.getKelasSaya(),
+      ]);
+      
+      final user = responses[0] as User;
+      final courses = responses[1] as List<dynamic>;
+      
+      // Calculate active sessions
+      int active = 0;
+      for (var course in courses) {
+        final pertemuans = course['pertemuans'] as List?;
+        if (pertemuans != null) {
+          active += pertemuans.where((p) => p['status'] == 'Berlangsung').length;
+        }
+      }
+
       if (mounted) {
         setState(() {
           _user = user;
+          _courses = courses;
+          _activeSessions = active;
           _isLoading = false;
         });
       }
     } catch (e) {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  String _getInitials(String name) {
+    if (name.isEmpty) return "D";
+    List<String> parts = name.trim().split(" ");
+    if (parts.length == 1) return parts[0][0].toUpperCase();
+    return "${parts[0][0]}${parts[1][0]}".toUpperCase();
   }
 
   void _onNavTapped(int index) {
@@ -60,8 +93,12 @@ class _DosenDashboardPageState extends State<DosenDashboardPage> {
         currentIndex: _currentIndex,
         onTap: _onNavTapped,
       ),
-      body: SingleChildScrollView(
-        child: Column(
+      body: RefreshIndicator(
+        onRefresh: _loadUserData,
+        color: const Color(0xFF7C3AED),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
           children: [
             /// 🔵 PREMIUM HEADER
             Container(
@@ -125,22 +162,33 @@ class _DosenDashboardPageState extends State<DosenDashboardPage> {
                   ),
                   Container(
                     width: 55, height: 55,
+                    alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.2),
                       shape: BoxShape.circle,
                       border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 2),
                     ),
-                    child: const Icon(Icons.person, color: Colors.white, size: 30),
+                    child: Text(
+                      _user != null ? _getInitials(_user!.name) : "D",
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
                 ],
               ),
             ),
 
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+            if (_isLoading)
+              const DashboardShimmer()
+            else
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                   const Text(
                     "Menu Utama",
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
@@ -150,26 +198,26 @@ class _DosenDashboardPageState extends State<DosenDashboardPage> {
                   _menuCard(
                     icon: Icons.qr_code_scanner_rounded,
                     title: "Mulai Absensi",
-                    subtitle: "Buka sesi absensi baru",
+                    subtitle: "Buka sesi absensi dari daftar kelas",
                     color: const Color(0xFF8B5CF6),
-                    onTap: () => Navigator.pushNamed(context, '/dosen/pertemuan/create'),
+                    onTap: () => _onNavTapped(1), // Route to Kelas Page
                   ),
 
                   _menuCard(
                     icon: Icons.analytics_outlined,
-                    title: "Monitoring Real-time",
-                    subtitle: "Pantau kehadiran mahasiswa",
+                    title: "Jadwal & Riwayat",
+                    subtitle: "Pantau riwayat kehadiran mahasiswa",
                     color: const Color(0xFF3B82F6),
-                    onTap: () {},
+                    onTap: () => _onNavTapped(1), // Route to Kelas Page
                   ),
 
                   const SizedBox(height: 24),
 
                   Row(
                     children: [
-                      Expanded(child: _statCard("Total Kelas", "2", const Color(0xFF6366F1))),
+                      Expanded(child: _statCard("Total Kelas", _courses.length.toString(), const Color(0xFF6366F1))),
                       const SizedBox(width: 16),
-                      Expanded(child: _statCard("Sesi Aktif", "0", const Color(0xFF10B981))),
+                      Expanded(child: _statCard("Sesi Aktif", _activeSessions.toString(), const Color(0xFF10B981))),
                     ],
                   ),
 
@@ -191,8 +239,23 @@ class _DosenDashboardPageState extends State<DosenDashboardPage> {
 
                   const SizedBox(height: 8),
 
-                  _kelasCard("Pemrograman Web", "TI-301 • 08:00 - 10:30", "Gedung A.2.1"),
-                  _kelasCard("Jaringan Komputer", "TI-304 • 13:00 - 15:30", "Lab Jaringan"),
+                  if (_courses.isEmpty)
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.grey.shade200),
+                      ),
+                      child: const Text("Tidak ada kelas pada semester aktif ini.", textAlign: TextAlign.center, style: TextStyle(color: Colors.grey)),
+                    )
+                  else
+                    ..._courses.take(3).map((c) {
+                      final title = c['mata_kuliah']?['nama_mk'] ?? 'Unknown';
+                      final room = c['kode_kelas'] ?? '-';
+                      return _kelasCard(title, room, "SKS: ${c['mata_kuliah']?['sks'] ?? '-'}");
+                    }),
 
                   const SizedBox(height: 40),
                 ],
@@ -200,6 +263,7 @@ class _DosenDashboardPageState extends State<DosenDashboardPage> {
             ),
           ],
         ),
+      ),
       ),
     );
   }

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AbsensiController;
+use App\Http\Controllers\Api\ActivityLogController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DosenController;
 use App\Http\Controllers\Api\KelasController;
@@ -18,6 +19,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']); // Done
     Route::get('/me', [AuthController::class, 'me']); // Done
     Route::post('/change-password', [AuthController::class, 'changePassword']); // Done
+    Route::post('/update-avatar', [AuthController::class, 'updateAvatar']); // Done
 });
 
 Route::middleware(['auth:sanctum', 'role:dosen'])->group(function () {
@@ -46,6 +48,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
 
     Route::get('/users', [AuthController::class, 'users']); // Done
     Route::put('/users/{user_id}', [AuthController::class, 'updateUser']); // Done
+    Route::post('/users/{user_id}/avatar', [AuthController::class, 'updateUserAvatar']); // Done
     Route::delete('/users/{user_id}', [AuthController::class, 'deleteUser']); // Done
 
     Route::apiResource('/program-studi', ProdiController::class); // Done
@@ -66,4 +69,6 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::apiResource('/pertemuan', PertemuanController::class); // Done
 
     Route::get('/dashboard-stats', [AuthController::class, 'dashboardStats']); // Done
+
+    Route::get('/activity-logs', [ActivityLogController::class, 'index']); // Done
 });

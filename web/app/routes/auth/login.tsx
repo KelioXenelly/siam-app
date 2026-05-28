@@ -1,5 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
+
+export function meta() {
+  return [
+    { title: "Admin Login | SIAM" },
+    { name: "description", content: "Portal otentikasi administrator Sistem Informasi Akademik Mahasiswa." },
+  ];
+}
 import { motion } from "motion/react";
 import {
   Eye,
@@ -46,7 +53,6 @@ export default function LoginPage() {
       const user = res.data.user;
 
       if(!token || !user) {
-        toast.error(res.data.message || "Login Gagal");
         setError(res.data.message || "Login Gagal");
         return;
       }
@@ -64,7 +70,6 @@ export default function LoginPage() {
         err.response?.data?.error ||
         "Login Gagal";
 
-      toast.error(message);
       setError(message);
     } finally {
       setLoading(false);

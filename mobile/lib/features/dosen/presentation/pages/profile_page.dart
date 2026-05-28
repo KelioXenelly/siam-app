@@ -1,4 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:mobile/core/constants/api_constants.dart';
 import 'package:mobile/features/auth/data/models/user_model.dart';
 import 'package:mobile/features/auth/data/services/auth_service.dart';
 import 'package:mobile/shared/widgets/dosen/bottom_nav.dart';
@@ -35,6 +38,37 @@ class _DosenProfilePageState extends State<DosenProfilePage> {
       }
     } catch (e) {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  String _getInitials(String name) {
+    if (name.isEmpty) return "D";
+    List<String> parts = name.trim().split(" ");
+    if (parts.length == 1) return parts[0][0].toUpperCase();
+    return "${parts[0][0]}${parts[1][0]}".toUpperCase();
+  }
+
+  Future<void> _uploadAvatar() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+    
+    if (image != null) {
+      setState(() => _isLoading = true);
+      try {
+        final updatedUser = await _authService.uploadAvatar(File(image.path));
+        if (mounted) {
+          setState(() {
+            _user = updatedUser;
+            _isLoading = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Foto profil berhasil diperbarui!')));
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() => _isLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceAll("Exception: ", ""))));
+        }
+      }
     }
   }
 
@@ -85,53 +119,62 @@ class _DosenProfilePageState extends State<DosenProfilePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
 
-                  /// 🔙 BACK + TITLE
-                  Row(
-                    children: [
-                      GestureDetector(
-                        onTap: () {
-                          if (Navigator.of(context).canPop()) {
-                            Navigator.of(context).pop();
-                          } else {
-                            Navigator.pushReplacementNamed(context, '/dosen/dashboard');
-                          }
-                        },
-                        child: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(Icons.arrow_back, color: Colors.white),
-                        ),
+                  const Center(
+                    child: Text(
+                      "Profil Dosen",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
                       ),
-                      const SizedBox(width: 12),
-                      const Text(
-                        "Profile",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      )
-                    ],
+                    ),
                   ),
-
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 30),
 
                   /// 👤 PROFILE INFO
                   Row(
                     children: [
-                      Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+                      GestureDetector(
+                        onTap: _isLoading ? null : _uploadAvatar,
+                        child: Stack(
+                          alignment: Alignment.bottomRight,
+                          children: [
+                            Container(
+                              width: 80,
+                              height: 80,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.2),
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+                                image: (_user?.avatar != null)
+                                    ? DecorationImage(
+                                        image: NetworkImage(ApiConstants.baseUrl.replaceAll('/api', '') + _user!.avatar!),
+                                        fit: BoxFit.cover,
+                                      )
+                                    : null,
+                              ),
+                              child: (_user?.avatar == null)
+                                  ? Text(
+                                      _user != null ? _getInitials(_user!.name) : "D",
+                                      style: const TextStyle(
+                                        fontSize: 32,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : null,
+                            ),
+                            Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.camera_alt, size: 16, color: Color(0xFF4F46E5)),
+                            ),
+                          ],
                         ),
-                        child: const Icon(Icons.person, size: 40, color: Colors.white),
                       ),
                       const SizedBox(width: 16),
                       if (_isLoading)

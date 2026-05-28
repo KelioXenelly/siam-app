@@ -4,4 +4,6 @@ export type Activity = {
   detail: string;
   time: string;
   status: "success" | "warning" | "info" | "danger";
+  created_at?: string;
+  user_name?: string;
 };

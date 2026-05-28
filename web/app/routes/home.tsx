@@ -2,6 +2,13 @@ import { useEffect } from "react";
 import { Link, useNavigate } from "react-router";
 import { isAuthenticated } from "~/lib/auth";
 
+export function meta() {
+  return [
+    { title: "SIAM | Digital Campus Experience" },
+    { name: "description", content: "Sistem Informasi Akademik Mahasiswa dalam genggaman Anda." },
+  ];
+}
+
 export default function Home() {
   const navigate = useNavigate();
 
@@ -27,7 +34,7 @@ export default function Home() {
           <h1 className="text-4xl md:text-5xl font-black tracking-tight drop-shadow-lg">
             SIAM <span className="text-blue-200">Mobile</span>
           </h1>
-          <p className="text-lg text-blue-100/90 font-medium leading-relaxed max-w-[280px] mx-auto">
+          <p className="text-lg text-blue-100/90 font-medium leading-relaxed max-w-70 mx-auto">
             Sistem Informasi Akademik Mahasiswa dalam genggaman Anda.
           </p>
         </div>
