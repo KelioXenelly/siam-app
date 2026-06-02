@@ -243,8 +243,10 @@ export default function KelasPage() {
   useEffect(() => {
     const fetchMahasiswa = async () => {
       try {
-        const res = await api.get("/mahasiswa");
-        setMahasiswaList(res.data.data);
+        // Fetch with a large per_page to get all students for the local filter to work
+        const res = await api.get("/mahasiswa?per_page=1000");
+        // Handle both paginated (res.data.data.data) and non-paginated (res.data.data) responses
+        setMahasiswaList(res.data.data.data ? res.data.data.data : res.data.data);
       } catch (error: any) {
         const errors = error.response?.data?.errors;
 
