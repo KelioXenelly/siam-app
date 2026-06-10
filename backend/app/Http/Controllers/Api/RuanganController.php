@@ -71,21 +71,33 @@ class RuanganController extends Controller
             ]
         )
     )]
-    public function index()
+    public function index(Request $request)
     {
-        $ruangans = Ruangan::orderBy('nama', 'asc')->get();
+        $search = $request->query('search');
+        $perPage = $request->query('per_page', 15);
+        $sortKey = $request->query('sort_key', 'nama');
+        $sortDir = $request->query('sort_dir', 'asc');
 
-        if ($ruangans->isEmpty()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Ruangan tidak ditemukan',
-            ], 404);
+        $query = Ruangan::query();
+
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('nama', 'like', "%{$search}%");
+            });
         }
+
+        if ($sortKey) {
+            $query->orderBy($sortKey, $sortDir);
+        } else {
+            $query->orderBy('nama', 'asc');
+        }
+
+        $data = $query->paginate($perPage);
 
         return response()->json([
             'success' => true,
             'message' => 'Ruangan berhasil diambil',
-            'data' => $ruangans
+            'data' => $data
         ], 200);
     }
 

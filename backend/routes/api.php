@@ -67,6 +67,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::post('/kelas/{kelas_id}/assign-mahasiswa', [KelasController::class, 'assignMahasiswa']);
 
     Route::apiResource('/pertemuan', PertemuanController::class);
+    Route::get('/pertemuan/{pertemuan_id}/absensi', [AbsensiController::class, 'byPertemuanForAdmin']);
 
     Route::get('/dashboard-stats', [AuthController::class, 'dashboardStats']);
 

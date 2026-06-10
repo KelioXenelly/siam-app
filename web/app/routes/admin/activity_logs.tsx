@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { Clock, Search, History } from "lucide-react";
 import { toast } from "sonner";
 import api from "~/lib/api";
+import { handleApiError } from "~/lib/utils";
 import { useServerTable } from "~/hooks/useServerTable";
 import { Pagination, SortableHeader } from "~/components/table_features";
 import type { Activity } from "~/types/activity";

@@ -21,9 +21,11 @@ import {
   Calendar,
   Clock,
   MapPin,
-} from "lucide-react";
+  Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useServerTable } from "../../hooks/useServerTable";
+import { SkeletonTable } from "~/components/ui/skeleton_table";
+import { EmptyState } from "~/components/ui/empty_state";
 import { Pagination, SortableHeader } from "../../components/table_features";
 import type { Kelas } from "~/types/kelas";
 import type { Mahasiswa } from "~/types/mahasiswa";
@@ -39,6 +41,7 @@ export default function KelasPage() {
   const [ruanganList, setRuanganList] = useState<Ruangan[]>([]);
 
   // Modal states
+  const [isSaving, setIsSaving] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<
     "create" | "edit" | "view" | "delete"
@@ -106,7 +109,20 @@ export default function KelasPage() {
     return time.slice(0, 5);
   };
 
+  
+  // Close modal on Escape
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isModalOpen) {
+        handleCloseModal();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isModalOpen]);
+
   const handleSave = async () => {
+    setIsSaving(true);
     if (
       !formData.kode_kelas ||
       !formData.mata_kuliah_id ||
@@ -180,9 +196,12 @@ export default function KelasPage() {
       }
     }
     handleCloseModal();
+  setIsSaving(false);
   };
 
+
   const handleDelete = async (id: number) => {
+    setIsSaving(true);
     if (!selectedKelas) return;
 
     try {
@@ -195,6 +214,7 @@ export default function KelasPage() {
       console.log(errors);
       toast.error(errors || "Gagal menghapus kelas.");
     }
+    setIsSaving(false);
   };
 
   // --- Assign Mahasiswa Logic ---
@@ -378,15 +398,14 @@ export default function KelasPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
-              {currentData.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={6}
-                    className="px-6 py-12 text-center text-slate-500"
-                  >
-                    Tidak ada kelas yang ditemukan.
-                  </td>
-                </tr>
+              {isLoading ? (
+                <SkeletonTable columns={6} rows={5} />
+              ) : currentData.length === 0 ? (
+                <EmptyState 
+                  title="Data Kosong"
+                  description="Belum ada data yang ditemukan. Silakan tambahkan data baru atau sesuaikan pencarian."
+                  colSpan={6}
+                />
               ) : (
                 currentData.map((k, index) => (
                   <tr
@@ -745,10 +764,11 @@ export default function KelasPage() {
                 {modalMode !== "view" && (
                   <button
                     onClick={handleSave}
-                    className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl font-medium text-sm hover:bg-blue-700 shadow-sm"
+                    disabled={isSaving}
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl font-medium text-sm hover:bg-blue-700 shadow-sm disabled:opacity-70"
                   >
-                    <Check className="w-4 h-4" />
-                    <span>Simpan Data</span>
+                    {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                    <span>{isSaving ? "Menyimpan..." : "Simpan Data"}</span>
                   </button>
                 )}
               </div>
@@ -934,9 +954,11 @@ export default function KelasPage() {
 
                 <button
                   onClick={() => handleDelete(selectedKelas!.id)}
-                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-xl transition shadow-sm"
+                  disabled={isSaving}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-xl transition shadow-sm disabled:opacity-70 inline-flex items-center gap-2"
                 >
-                  Hapus
+                  {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {isSaving ? "Menghapus..." : "Hapus"}
                 </button>
               </div>
             </motion.div>

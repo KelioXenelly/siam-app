@@ -201,12 +201,12 @@ class MahasiswaController extends Controller
     )]
     public function show($id)
     {
-        $mahasiswa = Mahasiswa::with('user')->findOrFail($id);
+        $mahasiswa = Mahasiswa::with(['user', 'prodi'])->findOrFail($id);
 
         return response()->json([
             'success' => true,
             'message' => 'Data mahasiswa berhasil diambil',
-            'data' => $mahasiswa->load('user', 'prodi'),
+            'data' => $mahasiswa,
         ], 200);
     }
 }

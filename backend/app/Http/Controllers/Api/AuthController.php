@@ -517,12 +517,34 @@ class AuthController extends Controller
             ]
         )
     )]
-    public function users()
+    public function users(Request $request)
     {
-        $users = User::with(['mahasiswa', 'dosen'])->get();
+        $search = $request->query('search');
+        $perPage = $request->query('per_page', 15);
+        $sortKey = $request->query('sort_key', 'name');
+        $sortDir = $request->query('sort_dir', 'asc');
+
+        $query = User::with(['mahasiswa', 'dosen']);
+
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('role', 'like', "%{$search}%");
+            });
+        }
+
+        if ($sortKey) {
+            $query->orderBy($sortKey, $sortDir);
+        } else {
+            $query->orderBy('name', 'asc');
+        }
+
+        $data = $query->paginate($perPage);
+
         return response()->json([
             'message' => 'Daftar pengguna berhasil diambil',
-            'data' => $users->load('mahasiswa', 'dosen'),
+            'data' => $data,
         ], 200);
     }
 
@@ -1005,17 +1027,8 @@ class AuthController extends Controller
         $user = $request->user();
 
         if ($request->hasFile('avatar')) {
-            // Hapus avatar lama jika ada
-            if ($user->avatar) {
-                $oldPath = str_replace('/storage/', '', $user->avatar);
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($oldPath);
-            }
-
             $file = $request->file('avatar');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $path = $file->storeAs('avatars', $filename, 'public');
-
-            $user->avatar = '/storage/' . $path;
+            $user->avatar = $user->uploadToCloudinary($file, 'siam/avatars');
             $user->save();
 
             // Memuat relasi agar kembalian user lengkap
@@ -1044,17 +1057,8 @@ class AuthController extends Controller
         ]);
 
         if ($request->hasFile('avatar')) {
-            // Hapus avatar lama jika ada
-            if ($user->avatar) {
-                $oldPath = str_replace('/storage/', '', $user->avatar);
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($oldPath);
-            }
-
             $file = $request->file('avatar');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $path = $file->storeAs('avatars', $filename, 'public');
-
-            $user->avatar = '/storage/' . $path;
+            $user->avatar = $user->uploadToCloudinary($file, 'siam/avatars');
             $user->save();
 
             // Memuat relasi

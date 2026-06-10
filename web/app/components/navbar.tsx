@@ -3,11 +3,12 @@ import { motion, AnimatePresence } from "motion/react";
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { toast } from "sonner";
+import { API_HOST } from '~/lib/api';
 import { useAuth } from "~/context/auth_context";
 import { logout } from "~/lib/auth";
 
 export default function Navbar({ onMenuClick }: { onMenuClick?: () => void }) {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -21,6 +22,7 @@ export default function Navbar({ onMenuClick }: { onMenuClick?: () => void }) {
     if (path === "/admin/mata-kuliah") return "Manajemen Mata Kuliah";
     if (path === "/admin/kelas") return "Manajemen Kelas";
     if (path === "/admin/pertemuan") return "Manajemen Pertemuan";
+    if (path === "/admin/activity-logs") return "Log Aktivitas";
     return "Admin Panel";
   };
 
@@ -46,30 +48,41 @@ export default function Navbar({ onMenuClick }: { onMenuClick?: () => void }) {
       <div className="flex items-center gap-4 sm:gap-6 relative">
         <button
           className="flex items-center gap-3 hover:opacity-80 transition-opacity"
-          onClick={() => setIsProfileOpen(!isProfileOpen)}
+          onClick={() => !isLoading && setIsProfileOpen(!isProfileOpen)}
         >
-          <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center border border-indigo-200 overflow-hidden shrink-0">
-            {user?.avatar ? (
-              <img src={`http://127.0.0.1:8000${user.avatar}`} alt={user.name} className="w-full h-full object-cover" />
-            ) : (
-              <span className="text-indigo-600 font-bold text-sm">
-                {user ? user.name.charAt(0).toUpperCase() : "A"}
-              </span>
-            )}
-          </div>
-          <div className="text-left hidden md:block">
-            <p className="text-sm font-medium text-slate-700 leading-tight">
-              {user ? user.name : "Loading..."}
-            </p>
-            <p className="text-xs text-slate-500">
-              {user
-                ? user.role.charAt(0).toUpperCase() + user.role.slice(1)
-                : "Loading..."}
-            </p>
-          </div>
-          <ChevronDown
-            className={`w-4 h-4 text-slate-400 transition-transform ${isProfileOpen ? "rotate-180" : ""}`}
-          />
+          {isLoading ? (
+            <>
+              <div className="w-8 h-8 rounded-full bg-slate-200 animate-pulse shrink-0" />
+              <div className="text-left hidden md:block">
+                <div className="h-4 w-24 bg-slate-200 rounded animate-pulse mb-1" />
+                <div className="h-3 w-16 bg-slate-200 rounded animate-pulse" />
+              </div>
+              <ChevronDown className="w-4 h-4 text-slate-300" />
+            </>
+          ) : (
+            <>
+              <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center border border-indigo-200 overflow-hidden shrink-0">
+                {user?.avatar ? (
+                  <img src={`${API_HOST}${user.avatar}`} alt={user.name} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-indigo-600 font-bold text-sm">
+                    {user ? user.name.charAt(0).toUpperCase() : "A"}
+                  </span>
+                )}
+              </div>
+              <div className="text-left hidden md:block">
+                <p className="text-sm font-medium text-slate-700 leading-tight">
+                  {user?.name}
+                </p>
+                <p className="text-xs text-slate-500">
+                  {user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : ""}
+                </p>
+              </div>
+              <ChevronDown
+                className={`w-4 h-4 text-slate-400 transition-transform ${isProfileOpen ? "rotate-180" : ""}`}
+              />
+            </>
+          )}
         </button>
 
         <AnimatePresence>

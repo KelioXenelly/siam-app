@@ -18,9 +18,11 @@ import {
   Calendar,
   Clock,
   MapPin,
-} from "lucide-react";
+  Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { useTable } from "../../hooks/useTable";
+import { useServerTable } from "~/hooks/useServerTable";
+import { SkeletonTable } from "~/components/ui/skeleton_table";
+import { EmptyState } from "~/components/ui/empty_state";
 import { Pagination, SortableHeader } from "../../components/table_features";
 import type { Pertemuan } from "~/types/pertemuan";
 import api from "~/lib/api";
@@ -28,15 +30,13 @@ import dayjs from "dayjs";
 import type { Kelas } from "~/types/kelas";
 
 export default function PertemuanPage() {
-  const [pertemuanList, setPertemuanList] = useState<Pertemuan[]>([]);
   const [kelasList, setKelasList] = useState<Kelas[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<
     "All" | "Terjadwal" | "Berlangsung" | "Selesai"
   >("All");
-  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Modal states
+  const [isSaving, setIsSaving] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<
     "create" | "edit" | "view" | "delete"
@@ -48,31 +48,22 @@ export default function PertemuanPage() {
   // Form states
   const [formData, setFormData] = useState<Partial<Pertemuan>>({});
 
-  const filteredData = pertemuanList.filter((p) => {
-    const matchesSearch =
-      p.kelas?.kode_kelas.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.kelas?.mata_kuliah?.nama_mk
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
-      p.kelas?.ruangan?.nama.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.kelas?.hari.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      `${p.kelas?.hari}, ${dayjs(p.tanggal).format("DD MMMM YYYY")}`
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
-      p.topik.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = filterStatus === "All" || p.status === filterStatus;
-    return matchesSearch && matchesStatus;
-  });
-
   const {
     currentData,
     currentPage,
     setCurrentPage,
     totalPages,
-    requestSort,
-    sortConfig,
     totalItems,
-  } = useTable(filteredData, itemsPerPage);
+    itemsPerPage,
+    setItemsPerPage,
+    searchTerm,
+    setSearchTerm,
+    sortConfig,
+    requestSort,
+    isLoading,
+    refreshData
+  } = useServerTable<Pertemuan>("/pertemuan", 10);
+
 
   const handleItemsPerPageChange = (value: number) => {
     setItemsPerPage(value);
@@ -107,7 +98,20 @@ export default function PertemuanPage() {
     return time.slice(0, 5);
   };
 
+  
+  // Close modal on Escape
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isModalOpen) {
+        handleCloseModal();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isModalOpen]);
+
   const handleSave = async () => {
+    setIsSaving(true);
     if (
       !formData.kelas_id ||
       !formData.pertemuan_ke ||
@@ -162,9 +166,12 @@ export default function PertemuanPage() {
       }
     }
     handleCloseModal();
+  setIsSaving(false);
   };
 
+
   const handleDelete = async (id: number) => {
+    setIsSaving(true);
     if (!selectedPertemuan) return;
 
     try {
@@ -177,6 +184,7 @@ export default function PertemuanPage() {
 
       toast.error(errors || "Gagal menghapus pertemuan.");
     }
+    setIsSaving(false);
   };
 
   const getStatusBadge = (status: Pertemuan["status"]) => {
@@ -208,7 +216,7 @@ export default function PertemuanPage() {
   const fetchPertemuan = async () => {
     try {
       const res = await api.get("/pertemuan");
-      setPertemuanList(res.data.data);
+      refreshData();
     } catch (error: any) {
       const errors = error.response?.data?.errors;
 
@@ -325,15 +333,14 @@ export default function PertemuanPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
-              {currentData.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={5}
-                    className="px-6 py-12 text-center text-slate-500"
-                  >
-                    Tidak ada jadwal pertemuan yang ditemukan.
-                  </td>
-                </tr>
+              {isLoading ? (
+                <SkeletonTable columns={5} rows={5} />
+              ) : currentData.length === 0 ? (
+                <EmptyState 
+                  title="Data Kosong"
+                  description="Belum ada data yang ditemukan. Silakan tambahkan data baru atau sesuaikan pencarian."
+                  colSpan={5}
+                />
               ) : (
                 currentData.map((p, index) => (
                   <tr
@@ -614,10 +621,11 @@ export default function PertemuanPage() {
                 {modalMode !== "view" && (
                   <button
                     onClick={handleSave}
-                    className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl font-medium text-sm hover:bg-blue-700 focus:ring-4 focus:ring-blue-600/20 transition-all shadow-sm"
+                    disabled={isSaving}
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl font-medium text-sm hover:bg-blue-700 focus:ring-4 focus:ring-blue-600/20 transition-all shadow-sm disabled:opacity-70"
                   >
-                    <Check className="w-4 h-4" />
-                    <span>Simpan Data</span>
+                    {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                    <span>{isSaving ? "Menyimpan..." : "Simpan Data"}</span>
                   </button>
                 )}
               </div>
@@ -699,9 +707,11 @@ export default function PertemuanPage() {
 
                 <button
                   onClick={() => handleDelete(selectedPertemuan!.id)}
-                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-xl transition shadow-sm"
+                  disabled={isSaving}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-xl transition shadow-sm disabled:opacity-70 inline-flex items-center gap-2"
                 >
-                  Hapus
+                  {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {isSaving ? "Menghapus..." : "Hapus"}
                 </button>
               </div>
             </motion.div>

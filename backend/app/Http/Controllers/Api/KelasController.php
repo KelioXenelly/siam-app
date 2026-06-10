@@ -8,6 +8,7 @@ use App\Models\Kelas;
 use Carbon\Carbon;
 use Carbon\Constants\UnitValue;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use OpenApi\Attributes as OA;
 
 class KelasController extends Controller
@@ -301,69 +302,71 @@ class KelasController extends Controller
             'kapasitas' => 'required|integer|min:1',
         ]);
 
-        $kelas = Kelas::create([
-            'kode_kelas' => $validated['kode_kelas'],
-            'mata_kuliah_id' => $validated['mata_kuliah_id'],
-            'dosen_id' => $validated['dosen_id'],
-            'ruangan_id' => $validated['ruangan_id'],
-            'semester' => $validated['semester'],
-            'tahun_ajaran' => $validated['tahun_ajaran'],
-            'hari' => $validated['hari'],
-            'jam_mulai' => $validated['jam_mulai'],
-            'jam_selesai' => $validated['jam_selesai'],
-            'kapasitas' => $validated['kapasitas'],
-        ]);
+        return DB::transaction(function () use ($validated) {
+            $kelas = Kelas::create([
+                'kode_kelas' => $validated['kode_kelas'],
+                'mata_kuliah_id' => $validated['mata_kuliah_id'],
+                'dosen_id' => $validated['dosen_id'],
+                'ruangan_id' => $validated['ruangan_id'],
+                'semester' => $validated['semester'],
+                'tahun_ajaran' => $validated['tahun_ajaran'],
+                'hari' => $validated['hari'],
+                'jam_mulai' => $validated['jam_mulai'],
+                'jam_selesai' => $validated['jam_selesai'],
+                'kapasitas' => $validated['kapasitas'],
+            ]);
 
-        // 🔥 MAP HARI → CARBON
-        $hariMap = [
-            'Senin' => UnitValue::MONDAY,
-            'Selasa' => UnitValue::TUESDAY,
-            'Rabu' => UnitValue::WEDNESDAY,
-            'Kamis' => UnitValue::THURSDAY,
-            'Jumat' => UnitValue::FRIDAY,
-            'Sabtu' => UnitValue::SATURDAY,
-            'Minggu' => UnitValue::SUNDAY,
-        ];
-
-        $targetDay = $hariMap[$kelas->hari] ?? UnitValue::MONDAY;
-
-        $startDate = Carbon::now()->startOfWeek();
-
-        while ($startDate->dayOfWeek !== $targetDay) {
-            $startDate->addDay();
-        }
-
-        // 🔥 PREPARE ARRAY
-        $pertemuanData = [];
-
-        for ($i = 1; $i <= 16; $i++) {
-
-            $tanggal = $startDate->copy()->addWeeks($i - 1);
-
-            $topik = match ($i) {
-                8 => 'UTS',
-                16 => 'UAS',
-                default => 'Pertemuan ' . $i,
-            };
-
-            $pertemuanData[] = [
-                'pertemuan_ke' => $i,
-                'tanggal' => $tanggal->format('Y-m-d'),
-                'topik' => $topik,
-                'status' => 'Terjadwal',
-                'started_at' => null,
-                'ended_at' => null,
+            // 🔥 MAP HARI → CARBON
+            $hariMap = [
+                'Senin' => UnitValue::MONDAY,
+                'Selasa' => UnitValue::TUESDAY,
+                'Rabu' => UnitValue::WEDNESDAY,
+                'Kamis' => UnitValue::THURSDAY,
+                'Jumat' => UnitValue::FRIDAY,
+                'Sabtu' => UnitValue::SATURDAY,
+                'Minggu' => UnitValue::SUNDAY,
             ];
-        }
 
-        // 🔥 INSERT SEKALI
-        $kelas->pertemuans()->createMany($pertemuanData);
+            $targetDay = $hariMap[$kelas->hari] ?? UnitValue::MONDAY;
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Kelas berhasil ditambahkan',
-            'data' => $kelas->load(['mataKuliah', 'dosen', 'mahasiswas', 'ruangan'])
-        ], 201);
+            $startDate = Carbon::now()->startOfWeek();
+
+            while ($startDate->dayOfWeek !== $targetDay) {
+                $startDate->addDay();
+            }
+
+            // 🔥 PREPARE ARRAY
+            $pertemuanData = [];
+
+            for ($i = 1; $i <= 16; $i++) {
+
+                $tanggal = $startDate->copy()->addWeeks($i - 1);
+
+                $topik = match ($i) {
+                    8 => 'UTS',
+                    16 => 'UAS',
+                    default => 'Pertemuan ' . $i,
+                };
+
+                $pertemuanData[] = [
+                    'pertemuan_ke' => $i,
+                    'tanggal' => $tanggal->format('Y-m-d'),
+                    'topik' => $topik,
+                    'status' => 'Terjadwal',
+                    'started_at' => null,
+                    'ended_at' => null,
+                ];
+            }
+
+            // 🔥 INSERT SEKALI
+            $kelas->pertemuans()->createMany($pertemuanData);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Kelas berhasil ditambahkan',
+                'data' => $kelas->load(['mataKuliah', 'dosen', 'mahasiswas', 'ruangan'])
+            ], 201);
+        });
     }
 
     /**
@@ -474,7 +477,7 @@ class KelasController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Kelas berhasil diambil',
-            'data' => $kelas->load(['mataKuliah', 'dosen', 'mahasiswas', 'ruangan'])
+            'data' => $kelas
         ], 200);
     }
 

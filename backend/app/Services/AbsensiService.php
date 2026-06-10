@@ -36,8 +36,8 @@ class AbsensiService
             $missingMahasiswaIds = $mahasiswaIdsInKelas->diff($alreadyAbsenIds);
 
             // Generate 'alfa' records for missing students
-            foreach ($missingMahasiswaIds as $mhsId) {
-                Absensi::create([
+            $records = collect($missingMahasiswaIds)->map(function ($mhsId) use ($sesi) {
+                return [
                     'sesi_absensi_id' => $sesi->id,
                     'mahasiswa_id' => $mhsId,
                     'latitude_mahasiswa' => 0,
@@ -45,7 +45,13 @@ class AbsensiService
                     'selfie_photo' => '-',
                     'status' => 'alfa',
                     'waktu_absen' => now(),
-                ]);
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            })->toArray();
+
+            if (!empty($records)) {
+                Absensi::insert($records);
             }
 
             // Mark session as closed

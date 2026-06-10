@@ -8,6 +8,7 @@ use App\Models\SesiAbsensi;
 use App\Models\Pertemuan;
 use App\Services\AbsensiService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 use OpenApi\Attributes as OA;
@@ -94,52 +95,54 @@ class SesiAbsensiController extends Controller
             'longitude_dosen' => 'required|numeric',
         ]);
 
-        // 1. Ambil data pertemuan dan relasi kelasnya
-        $pertemuan = Pertemuan::with('kelas')->findOrFail($validated['pertemuan_id']);
+        return DB::transaction(function () use ($request, $validated) {
+            // 1. Ambil data pertemuan dan relasi kelasnya
+            $pertemuan = Pertemuan::with('kelas')->findOrFail($validated['pertemuan_id']);
 
-        // 2. CEK DULU: Apakah dosen yang login adalah pemilik kelas ini?
-        if ($pertemuan->kelas->dosen_id !== $request->user()->dosen->id) {
+            // 2. CEK DULU: Apakah dosen yang login adalah pemilik kelas ini?
+            if ($pertemuan->kelas->dosen_id !== $request->user()->dosen->id) {
+                return response()->json([
+                    'message' => 'Bukan kelas anda, anda tidak berhak mengakses kelas ini'
+                ], 403);
+            }
+
+            // 2.5 CEK STATUS: Apakah pertemuan sudah selesai?
+            if ($pertemuan->status === 'Selesai') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Pertemuan sudah selesai, tidak bisa generate QR absensi'
+                ], 400);
+            }
+
+            // 3. Gunakan updateOrCreate agar data absensi mahasiswa yang sudah scan tidak hilang
+            $token = Str::random(40);
+
+            $sesi = SesiAbsensi::updateOrCreate(
+                ['pertemuan_id' => $validated['pertemuan_id']],
+                [
+                    'qr_token' => $token,
+                    'latitude_dosen' => $validated['latitude_dosen'],
+                    'longitude_dosen' => $validated['longitude_dosen'],
+                    'radius_validasi' => 50,
+                    'expired_at' => Carbon::now()->addMinutes(10),
+                    'is_closed' => false,
+                ]
+            );
+
+            // data yang akan di-encode ke QR
+            $qrData = json_encode([
+                'token' => $token
+            ]);
+
             return response()->json([
-                'message' => 'Bukan kelas anda, anda tidak berhak mengakses kelas ini'
-            ], 403);
-        }
-
-        // 2.5 CEK STATUS: Apakah pertemuan sudah selesai?
-        if ($pertemuan->status === 'Selesai') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Pertemuan sudah selesai, tidak bisa generate QR absensi'
-            ], 400);
-        }
-
-        // 3. Gunakan updateOrCreate agar data absensi mahasiswa yang sudah scan tidak hilang
-        $token = Str::random(40);
-
-        $sesi = SesiAbsensi::updateOrCreate(
-            ['pertemuan_id' => $validated['pertemuan_id']],
-            [
-                'qr_token' => $token,
-                'latitude_dosen' => $validated['latitude_dosen'],
-                'longitude_dosen' => $validated['longitude_dosen'],
-                'radius_validasi' => 50,
-                'expired_at' => Carbon::now()->addMinutes(10),
-                'is_closed' => false,
-            ]
-        );
-
-        // data yang akan di-encode ke QR
-        $qrData = json_encode([
-            'token' => $token
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'QR berhasil dibuat',
-            'data' => [
-                'qr_data' => $qrData,
-                'expired_at' => $sesi->expired_at
-            ]
-        ], 201);
+                'success' => true,
+                'message' => 'QR berhasil dibuat',
+                'data' => [
+                    'qr_data' => $qrData,
+                    'expired_at' => $sesi->expired_at
+                ]
+            ], 201);
+        });
     }
 
     #[OA\Post(

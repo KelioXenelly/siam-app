@@ -7,7 +7,7 @@ import {
   Search,
   Trash2,
   X,
-} from "lucide-react";
+  Loader2 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
 
@@ -18,17 +18,17 @@ export function meta() {
   ];
 }
 import { toast } from "sonner";
+import { SkeletonTable } from "~/components/ui/skeleton_table";
+import { EmptyState } from "~/components/ui/empty_state";
 import { Pagination, SortableHeader } from "~/components/table_features";
-import { useTable } from "~/hooks/useTable";
+import { useServerTable } from "~/hooks/useServerTable";
 import api from "~/lib/api";
 import type { MataKuliah } from "~/types/matakuliah";
 
 export default function MataKuliahPage() {
-  const [mataKuliahList, setMataKuliahList] = useState<MataKuliah[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Modal states
+  const [isSaving, setIsSaving] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<
     "create" | "edit" | "view" | "delete"
@@ -38,23 +38,23 @@ export default function MataKuliahPage() {
   // Form states
   const [formData, setFormData] = useState<Partial<MataKuliah>>({});
 
-  const filteredData = (mataKuliahList || []).filter((mk) => {
-    const matchesSearch =
-      mk.nama_mk.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      mk.kode_mk.toLowerCase().includes(searchTerm.toLowerCase());
-
-    return matchesSearch;
-  });
 
   const {
     currentData,
     currentPage,
     setCurrentPage,
     totalPages,
-    requestSort,
-    sortConfig,
     totalItems,
-  } = useTable(filteredData, itemsPerPage);
+    itemsPerPage,
+    setItemsPerPage,
+    searchTerm,
+    setSearchTerm,
+    sortConfig,
+    requestSort,
+    isLoading,
+    refreshData
+  } = useServerTable<MataKuliah>("/mata-kuliah", 10);
+
 
   const handleItemsPerPageChange = (value: number) => {
     setItemsPerPage(value);
@@ -82,7 +82,20 @@ export default function MataKuliahPage() {
     setFormData({});
   };
 
+  
+  // Close modal on Escape
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isModalOpen) {
+        handleCloseModal();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isModalOpen]);
+
   const handleSave = async () => {
+    setIsSaving(true);
     if (!formData.kode_mk || !formData.nama_mk || !formData.sks) {
       toast.error("Mohon lengkapi semua data wajib!");
       return;
@@ -98,7 +111,7 @@ export default function MataKuliahPage() {
       try {
         const res = await api.post("/mata-kuliah", newMK);
         const createdMK = res.data.data;
-        setMataKuliahList([...mataKuliahList, createdMK]);
+        await refreshData();
         toast.success(res.data.message || "Mata Kuliah berhasil ditambahkan!"); // kenapa masih terlempar di sini? Bukannya error yaaa?
       } catch (error: any) {
         const errors = error.response?.data?.errors;
@@ -120,11 +133,7 @@ export default function MataKuliahPage() {
       try {
         const res = await api.put(`/mata-kuliah/${selectedMK.id}`, updatedMK);
         const updatedMKFromRes = res.data.data;
-        setMataKuliahList(
-          mataKuliahList.map((mk) =>
-            mk.id === selectedMK.id ? updatedMKFromRes : mk,
-          ),
-        );
+        await refreshData();
         toast.success(res.data.message || "Mata Kuliah berhasil diperbarui!");
       } catch (error: any) {
         const errors = error.response?.data?.errors;
@@ -137,14 +146,17 @@ export default function MataKuliahPage() {
       }
     }
     handleCloseModal();
+  setIsSaving(false);
   };
 
+
   const handleDelete = async (id: number) => {
+    setIsSaving(true);
     if (!selectedMK) return;
 
     try {
       const res = await api.delete(`/mata-kuliah/${id}`);
-      setMataKuliahList(mataKuliahList.filter((mk) => mk.id !== id));
+      await refreshData();
       toast.success(res.data.message || "Mata Kuliah berhasil dihapus!");
       handleCloseModal();
     } catch (error: any) {
@@ -152,21 +164,9 @@ export default function MataKuliahPage() {
 
       toast.error(errors || "Gagal menghapus mata kuliah.");
     }
+    setIsSaving(false);
   };
 
-  useEffect(() => {
-    const fetchMataKuliah = async () => {
-      try {
-        const res = await api.get("/mata-kuliah");
-        setMataKuliahList(res.data.data);
-        console.log("Fetched Mata Kuliah:", res.data.data);
-      } catch (error) {
-        toast.error("Gagal memuat data mata kuliah.");
-      }
-    };
-
-    fetchMataKuliah();
-  }, []);
 
   return (
     <div className="flex flex-col gap-6 h-full">
@@ -230,15 +230,14 @@ export default function MataKuliahPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
-              {currentData.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={6}
-                    className="px-6 py-12 text-center text-slate-500"
-                  >
-                    Tidak ada mata kuliah yang ditemukan.
-                  </td>
-                </tr>
+              {isLoading ? (
+                <SkeletonTable columns={6} rows={5} />
+              ) : currentData.length === 0 ? (
+                <EmptyState 
+                  title="Data Kosong"
+                  description="Belum ada data yang ditemukan. Silakan tambahkan data baru atau sesuaikan pencarian."
+                  colSpan={6}
+                />
               ) : (
                 currentData.map((mk, index) => (
                   <tr
@@ -409,10 +408,11 @@ export default function MataKuliahPage() {
                 {modalMode !== "view" && (
                   <button
                     onClick={handleSave}
-                    className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl font-medium text-sm hover:bg-blue-700 focus:ring-4 focus:ring-blue-600/20 transition-all shadow-sm"
+                    disabled={isSaving}
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl font-medium text-sm hover:bg-blue-700 focus:ring-4 focus:ring-blue-600/20 transition-all shadow-sm disabled:opacity-70"
                   >
-                    <Check className="w-4 h-4" />
-                    <span>Simpan Data</span>
+                    {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                    <span>{isSaving ? "Menyimpan..." : "Simpan Data"}</span>
                   </button>
                 )}
               </div>
@@ -483,9 +483,11 @@ export default function MataKuliahPage() {
 
                 <button
                   onClick={() => handleDelete(selectedMK!.id)}
-                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-xl transition shadow-sm"
+                  disabled={isSaving}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-xl transition shadow-sm disabled:opacity-70 inline-flex items-center gap-2"
                 >
-                  Hapus
+                  {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {isSaving ? "Menghapus..." : "Hapus"}
                 </button>
               </div>
             </motion.div>

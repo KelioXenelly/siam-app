@@ -4,7 +4,7 @@ import { useNavigate } from "react-router";
 export function meta() {
   return [
     { title: "Admin Login | SIAM" },
-    { name: "description", content: "Portal otentikasi administrator Sistem Informasi Akademik Mahasiswa." },
+    { name: "description", content: "Portal otentikasi administrator Sistem Informasi Absensi Mahasiswa." },
   ];
 }
 import { motion } from "motion/react";
