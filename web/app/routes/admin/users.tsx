@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
+
+export function meta() {
+  return [
+    { title: "Manajemen Pengguna | SIAM Admin" },
+    { name: "description", content: "Kelola data pengguna SIAM." },
+  ];
+}
 import {
   Plus,
   Search,
@@ -13,24 +20,25 @@ import {
   X,
   Check,
   Users,
-} from "lucide-react";
+  Loader2 } from "lucide-react";
 import api from "~/lib/api";
 import type { User } from "~/types/user";
 import type { Role } from "~/types/role";
 import type { Prodi } from "~/types/prodi";
 import { toast } from "sonner";
-import { useTable } from "~/hooks/useTable";
+import { useServerTable } from "~/hooks/useServerTable";
+import { useAuth } from "~/context/auth_context";
+import { SkeletonTable } from "~/components/ui/skeleton_table";
+import { EmptyState } from "~/components/ui/empty_state";
 import { Pagination, SortableHeader } from "~/components/table_features";
 
 export default function UsersPage() {
-  const [users, setUsers] = useState<User[]>([]);
+  const { user: currentUser, refreshUser } = useAuth();
   const [prodis, setProdis] = useState<Prodi[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [filterRole, setFilterRole] = useState<Role | "all">("all");
-  const [isLoading, setIsLoading] = useState(false);
 
   // Modal states
+  const [isSaving, setIsSaving] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<
     "create" | "edit" | "view" | "delete"
@@ -39,33 +47,26 @@ export default function UsersPage() {
 
   // Form states
   const [formData, setFormData] = useState<Partial<User>>({});
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
-  const mappedUsers = (users || []).map((user) => ({
-    ...user,
-    // Ambil nilai NIM atau NIDN secara dinamis
-    nim_nidn: user.mahasiswa?.nim || user.dosen?.nidn || "",
-  }));
-
-  const filteredUsers = mappedUsers.filter((user) => {
-    const matchesSearch =
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.nim_nidn.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase());
-      
-    const matchesRole = filterRole === "all" || user.role === filterRole;
-
-    return matchesSearch && matchesRole;
-  });
 
   const {
     currentData,
     currentPage,
     setCurrentPage,
     totalPages,
-    requestSort,
-    sortConfig,
     totalItems,
-  } = useTable(filteredUsers, itemsPerPage);
+    itemsPerPage,
+    setItemsPerPage,
+    searchTerm,
+    setSearchTerm,
+    sortConfig,
+    requestSort,
+    isLoading,
+    refreshData
+  } = useServerTable<User>("/users", 10);
+
 
   const handleItemsPerPageChange = (value: number) => {
     setItemsPerPage(value);
@@ -80,6 +81,8 @@ export default function UsersPage() {
     console.log("Opening modal in mode:", mode, "with user:", user);
     if (user) {
       setSelectedUser(user);
+      setAvatarFile(null);
+      setAvatarPreview(user.avatar ? `http://127.0.0.1:8000${user.avatar}` : null);
       setFormData({
         ...user,
         nim_nidn: user.mahasiswa?.nim || user.dosen?.nidn || "",
@@ -88,6 +91,8 @@ export default function UsersPage() {
       });
     } else {
       setSelectedUser(null);
+      setAvatarFile(null);
+      setAvatarPreview(null);
       setFormData({ role: "mahasiswa", is_active: true });
     }
     setIsModalOpen(true);
@@ -97,10 +102,24 @@ export default function UsersPage() {
     setIsModalOpen(false);
     setSelectedUser(null);
     setFormData({});
+    setAvatarFile(null);
+    setAvatarPreview(null);
   };
 
+  
+  // Close modal on Escape
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isModalOpen) {
+        handleCloseModal();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isModalOpen]);
+
   const handleSave = async () => {
-    setIsLoading(true);
+    setIsSaving(true);
     // Ambil role dan nilai input nim_nidn dari form
     const role = (formData.role as Role) || "mahasiswa";
     const inputNimNidn = formData.nim_nidn || "";
@@ -118,8 +137,22 @@ export default function UsersPage() {
 
       try {
         const res = await api.post("/register", newUser);
-        const createdUser = res.data.data;
-        setUsers([...users, createdUser]);
+        let createdUser = res.data.data;
+
+        if (avatarFile) {
+          const formDataAvatar = new FormData();
+          formDataAvatar.append("avatar", avatarFile);
+          try {
+            const resAvatar = await api.post(`/users/${createdUser.id}/avatar`, formDataAvatar, {
+              headers: { "Content-Type": "multipart/form-data" },
+            });
+            createdUser = resAvatar.data.data;
+          } catch (err) {
+            toast.error("Pengguna dibuat, tapi gagal mengunggah avatar.");
+          }
+        }
+
+        await refreshData();
         toast.success(res.data.message || "Pengguna baru berhasil dibuat!");
       } catch (error: any) {
         const errors = error.response?.data?.errors;
@@ -155,13 +188,27 @@ export default function UsersPage() {
 
       try {
         const res = await api.put(`/users/${selectedUser.id}`, updatedUser);
-        const updatedUserFromServer = res.data.data;
-        setUsers(
-          users.map((u) =>
-            u.id === selectedUser.id ? updatedUserFromServer : u,
-          ),
-        );
+        let updatedUserFromServer = res.data.data;
+
+        if (avatarFile) {
+          const formDataAvatar = new FormData();
+          formDataAvatar.append("avatar", avatarFile);
+          try {
+            const resAvatar = await api.post(`/users/${selectedUser.id}/avatar`, formDataAvatar, {
+              headers: { "Content-Type": "multipart/form-data" },
+            });
+            updatedUserFromServer = resAvatar.data.data;
+          } catch (err) {
+            toast.error("Pengguna diperbarui, tapi gagal mengunggah avatar.");
+          }
+        }
+
+        await refreshData();
         toast.success(res.data.message || "Pengguna berhasil diperbarui!");
+
+        if (currentUser?.id === selectedUser.id) {
+          refreshUser();
+        }
       } catch (error: any) {
         const errors = error.response?.data?.errors;
 
@@ -177,7 +224,7 @@ export default function UsersPage() {
       }
     }
     handleCloseModal();
-    setIsLoading(false);
+    setIsSaving(false);
   };
 
   const handleDelete = async (id: number) => {
@@ -185,7 +232,7 @@ export default function UsersPage() {
 
     try {
       const res = await api.delete(`/users/${id}`);
-      setUsers(users.filter((user) => user.id !== id));
+      await refreshData();
       toast.success(res.data.message || "Pengguna berhasil dihapus!");
       handleCloseModal();
     } catch (error: any) {
@@ -218,28 +265,6 @@ export default function UsersPage() {
     }
   };
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const res = await api.get("/users");
-        setUsers(res.data.data);
-      } catch (error) {
-        toast.error("Gagal mengambil data pengguna.");
-      }
-    };
-
-    const fetchProdi = async () => {
-      try {
-        const res = await api.get("/program-studi");
-        setProdis(res.data.data);
-      } catch (error) {
-        toast.error("Gagal mengambil data prodi.");
-      }
-    };
-
-    fetchUsers();
-    fetchProdi();
-  }, []);
 
   return (
     <div className="flex flex-col gap-6 h-full">
@@ -330,15 +355,14 @@ export default function UsersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
-              {currentData.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={6}
-                    className="px-6 py-12 text-center text-slate-500"
-                  >
-                    Tidak ada data pengguna yang ditemukan.
-                  </td>
-                </tr>
+              {isLoading ? (
+                <SkeletonTable columns={6} rows={5} />
+              ) : currentData.length === 0 ? (
+                <EmptyState 
+                  title="Data Kosong"
+                  description="Belum ada data yang ditemukan. Silakan tambahkan data baru atau sesuaikan pencarian."
+                  colSpan={6}
+                />
               ) : (
                 currentData.map((user, index) => (
                   <tr
@@ -349,13 +373,24 @@ export default function UsersPage() {
                       {index + 1}
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex flex-col">
-                        <span className="font-medium text-slate-900">
-                          {user.name}
-                        </span>
-                        <span className="text-sm text-slate-500">
-                          {user.email}
-                        </span>
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-full bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">
+                          {user.avatar ? (
+                            <img src={`http://127.0.0.1:8000${user.avatar}`} alt={user.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <span className="text-sm font-bold text-slate-500">
+                              {user.name.charAt(0).toUpperCase()}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="font-medium text-slate-900">
+                            {user.name}
+                          </span>
+                          <span className="text-sm text-slate-500">
+                            {user.email}
+                          </span>
+                        </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">{getRoleBadge(user.role)}</td>
@@ -457,6 +492,34 @@ export default function UsersPage() {
 
               <div className="p-6 space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5 sm:col-span-2 flex items-center gap-4">
+                    <div className="w-16 h-16 rounded-full bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">
+                      {avatarPreview ? (
+                        <img src={avatarPreview} alt="Preview" className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-2xl font-bold text-slate-400">
+                          {formData.name ? formData.name.charAt(0).toUpperCase() : "?"}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <label className="text-sm font-medium text-slate-700">Foto Profil (Opsional)</label>
+                      <input
+                        type="file"
+                        accept="image/png, image/jpeg, image/webp"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            setAvatarFile(file);
+                            setAvatarPreview(URL.createObjectURL(file));
+                          }
+                        }}
+                        disabled={modalMode === "view"}
+                        className="w-full mt-1 px-3 py-1.5 text-sm bg-slate-50 border border-slate-200 rounded-xl file:mr-4 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-70"
+                      />
+                    </div>
+                  </div>
+
                   <div className="space-y-1.5 sm:col-span-2">
                     <label className="text-sm font-medium text-slate-700">
                       Nama Lengkap <span className="text-red-500">*</span>
@@ -645,10 +708,11 @@ export default function UsersPage() {
                 {modalMode !== "view" && (
                   <button
                     onClick={handleSave}
-                    className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl font-medium text-sm hover:bg-blue-700 focus:ring-4 focus:ring-blue-600/20 transition-all shadow-sm"
+                    disabled={isSaving}
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl font-medium text-sm hover:bg-blue-700 focus:ring-4 focus:ring-blue-600/20 transition-all shadow-sm disabled:opacity-70"
                   >
-                    <Check className="w-4 h-4" />
-                    <span>Simpan Data</span>
+                    {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                    <span>{isSaving ? "Menyimpan..." : "Simpan Data"}</span>
                   </button>
                 )}
               </div>
@@ -728,9 +792,11 @@ export default function UsersPage() {
 
                 <button
                   onClick={() => handleDelete(selectedUser!.id)}
-                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-xl transition shadow-sm"
+                  disabled={isSaving}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-xl transition shadow-sm disabled:opacity-70 inline-flex items-center gap-2"
                 >
-                  Hapus
+                  {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {isSaving ? "Menghapus..." : "Hapus"}
                 </button>
               </div>
             </motion.div>

@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:mobile/core/services/storage_service.dart';
-import 'package:mobile/features/auth/presentation/pages/login_page.dart';
-import 'package:mobile/features/dosen/presentation/pages/dashboard_page.dart';
-import 'package:mobile/features/dosen/presentation/pages/kelas_detail_page.dart';
-import 'package:mobile/features/dosen/presentation/pages/kelas_page.dart';
-import 'package:mobile/features/dosen/presentation/pages/profile_page.dart';
-import 'package:mobile/features/mahasiswa/presentation/pages/dashboard_page.dart';
-import 'package:mobile/features/mahasiswa/presentation/pages/profile_page.dart';
+import 'package:mobile/core/storage_service.dart';
+import 'package:mobile/auth/pages/login_page.dart';
+import 'package:mobile/auth/pages/ubah_password_page.dart';
+import 'package:mobile/dosen/pages/kelas_page.dart';
+import 'package:mobile/dosen/pages/profile_page.dart';
+import 'package:mobile/mahasiswa/mahasiswa_main.dart';
+import 'package:mobile/dosen/dosen_main.dart';
+import 'package:mobile/mahasiswa/pages/profile_page.dart';
+import 'package:mobile/mahasiswa/pages/kelas_page.dart';
+import 'package:mobile/mahasiswa/pages/riwayat_page.dart';
+
+final GlobalKey<NavigatorState> globalNavigatorKey = GlobalKey<NavigatorState>();
 
 void main() {
   // Ensure plugin services are initialized
@@ -31,6 +35,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: globalNavigatorKey,
       title: 'SIAM',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
@@ -39,13 +44,15 @@ class MyApp extends StatelessWidget {
       ),
       routes: {
         '/login': (context) => const LoginPage(),
+        '/ubah-password': (context) => const UbahPasswordPage(),
         // Mahasiswa Routes
-        '/dashboard': (context) => const DashboardPage(),
+        '/dashboard': (context) => const MahasiswaMain(),
+        '/kelas': (context) => const KelasPage(),
+        '/riwayat': (context) => const RiwayatPage(),
         '/profile': (context) => const ProfilePage(),
         // Dosen Routes
-        '/dosen/dashboard': (context) => const DosenDashboardPage(),
+        '/dosen/dashboard': (context) => const DosenMain(),
         '/dosen/kelas': (context) => const DosenKelasPage(),
-        '/dosen/kelas/detail': (context) => DosenDetailKelasPage(),
         '/dosen/profile': (context) => const DosenProfilePage(),
       },
       home: FutureBuilder<Map<String, dynamic>>(
@@ -65,10 +72,10 @@ class MyApp extends StatelessWidget {
           if (data != null && data['isLoggedIn'] == true) {
             final role = data['role'];
             if (role == 'dosen') {
-              return const DosenDashboardPage();
+              return const DosenMain();
             } else {
               // Default to Mahasiswa Dashboard
-              return const DashboardPage();
+              return const MahasiswaMain();
             }
           }
 

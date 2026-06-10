@@ -107,7 +107,7 @@ class AbsensiController extends Controller
         $mahasiswa = $user->mahasiswa;
 
         // 1. cek sesi (validasi token)
-        $sesi = SesiAbsensi::where('qr_token', $validated['token'])->first();
+        $sesi = SesiAbsensi::with('pertemuan.kelas')->where('qr_token', $validated['token'])->first();
 
         if (!$sesi) {
             return response()->json([
@@ -145,62 +145,69 @@ class AbsensiController extends Controller
             ], 403);
         }
 
-        // 4. cek sudah absen?
-        $already = Absensi::where('sesi_absensi_id', $sesi->id)
-            ->where('mahasiswa_id', $mahasiswa->id)
-            ->exists();
+        return DB::transaction(function () use ($request, $sesi, $mahasiswa, $validated) {
+            // 4. cek sudah absen?
+            $already = Absensi::where('sesi_absensi_id', $sesi->id)
+                ->where('mahasiswa_id', $mahasiswa->id)
+                ->lockForUpdate()
+                ->first();
 
-        if ($already) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Anda sudah melakukan absensi',
-            ], 400);
-        }
+            // Jika sudah absen DAN statusnya bukan 'alfa', tolak.
+            // Jika statusnya 'alfa' (karena sesi dibuka ulang), izinkan untuk ditimpa.
+            if ($already && strtolower(trim($already->status)) !== 'alfa') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda sudah absensi (Status: ' . $already->status . ')',
+                ], 400);
+            }
 
-        // 5. cek jarak (Haversine) -> validasi GPS
-        $distance = $this->distance(
-            $validated['latitude_mahasiswa'],
-            $validated['longitude_mahasiswa'],
-            $sesi->latitude_dosen,
-            $sesi->longitude_dosen,
-        );
+            // 5. cek jarak (Haversine) -> validasi GPS
+            $distance = $this->distance(
+                $validated['latitude_mahasiswa'],
+                $validated['longitude_mahasiswa'],
+                $sesi->latitude_dosen,
+                $sesi->longitude_dosen,
+            );
 
-        if ($distance > $sesi->radius_validasi) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Di luar radius',
-                'distance' => round($distance, 2) . ' meter',
-            ], 400);
-        }
+            if ($distance > $sesi->radius_validasi) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Di luar radius',
+                    'distance' => round($distance, 2) . ' meter',
+                ], 400);
+            }
 
-        // 6. tentukan status (hadir / terlambat)
-        $status = 'hadir';
+            // 6. tentukan status (hadir / terlambat)
+            $status = 'hadir';
 
-        // jika lebih dari 10 menit = terlambat
-        if (Carbon::now()->diffInMinutes($sesi->created_at) > 10) {
-            $status = 'terlambat';
-        }
+            // jika lebih dari 10 menit = terlambat
+            if (Carbon::now()->diffInMinutes($sesi->created_at) > 10) {
+                $status = 'terlambat';
+            }
 
-        return DB::transaction(function () use ($request, $sesi, $mahasiswa, $validated, $status) {
             // 7. upload selfie
             if ($request->hasFile('selfie_photo')) {
                 $file = $request->file('selfie_photo');
-                $filename = time() . '_' . $file->getClientOriginalName();
-                $path = $file->storeAs('selfies', $filename, 'public');
+                $absensiTemp = new Absensi();
+                $path = $absensiTemp->uploadToCloudinary($file, 'siam/selfies');
             } else {
                 throw new \Exception('Selfie wajib diupload');
             }
 
-            // 8. simpan absensi
-            $absensi = Absensi::create([
-                'sesi_absensi_id' => $sesi->id,
-                'mahasiswa_id' => $mahasiswa->id,
-                'latitude_mahasiswa' => $validated['latitude_mahasiswa'],
-                'longitude_mahasiswa' => $validated['longitude_mahasiswa'],
-                'selfie_photo' => $path,
-                'status' => $status,
-                'waktu_absen' => Carbon::now(),
-            ]);
+            // 8. simpan atau perbarui absensi (menimpa status alfa jika ada)
+            $absensi = Absensi::updateOrCreate(
+                [
+                    'sesi_absensi_id' => $sesi->id,
+                    'mahasiswa_id' => $mahasiswa->id,
+                ],
+                [
+                    'latitude_mahasiswa' => $validated['latitude_mahasiswa'],
+                    'longitude_mahasiswa' => $validated['longitude_mahasiswa'],
+                    'selfie_photo' => $path,
+                    'status' => $status,
+                    'waktu_absen' => Carbon::now(),
+                ]
+            );
 
             return response()->json([
                 'success' => true,
@@ -267,7 +274,7 @@ class AbsensiController extends Controller
             ], 404);
         }
 
-        $absensi = Absensi::with(['sesiAbsensi.pertemuan.kelas.mataKuliah', 'sesiAbsensi.pertemuan.kelas'])
+        $absensi = Absensi::with(['sesiAbsensi.pertemuan.kelas.mataKuliah'])
             ->where('mahasiswa_id', $mahasiswa->id)
             ->latest()
             ->get();
@@ -447,6 +454,45 @@ class AbsensiController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Status absensi berhasil diperbarui',
+            'data' => $absensi
+        ], 200);
+    }
+
+    #[OA\Get(
+        path: "/api/pertemuan/{pertemuan_id}/absensi",
+        summary: "Get attendance for a specific Pertemuan (Admin)",
+        security: [["bearerAuth" => []]],
+        tags: ["Absensi"],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: "Data absensi berhasil diambil",
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: "success", type: "boolean", example: true),
+                        new OA\Property(property: "data", type: "array", items: new OA\Items(type: "object"))
+                    ]
+                )
+            )
+        ]
+    )]
+    public function byPertemuanForAdmin($pertemuan_id)
+    {
+        $sesi = SesiAbsensi::where('pertemuan_id', $pertemuan_id)->first();
+
+        if (!$sesi) {
+            return response()->json([
+                'success' => true,
+                'data' => []
+            ], 200);
+        }
+
+        $absensi = Absensi::with('mahasiswa.user')
+            ->where('sesi_absensi_id', $sesi->id)
+            ->get();
+
+        return response()->json([
+            'success' => true,
             'data' => $absensi
         ], 200);
     }

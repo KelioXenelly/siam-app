@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 
 use App\Models\Mahasiswa;
+use Illuminate\Http\Request;
 use OpenApi\Attributes as OA;
 
 class MahasiswaController extends Controller
@@ -83,16 +84,30 @@ class MahasiswaController extends Controller
             )
         ]
     )]
-    public function index()
+    public function index(Request $request)
     {
-        $mahasiswas = Mahasiswa::with('user', 'prodi')->get();
+        $search = $request->query('search');
+        $perPage = $request->query('per_page', 15);
+        $sortKey = $request->query('sort_key', 'created_at');
+        $sortDir = $request->query('sort_dir', 'desc');
 
-        if ($mahasiswas->isEmpty()) {
-            return response()->json([
-                'success' => false,
-                'errors' => 'Data mahasiswa tidak ditemukan',
-            ], 404);
+        $query = Mahasiswa::with('user', 'prodi');
+
+        if ($search) {
+            $query->whereHas('user', function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            })->orWhere('nim', 'like', "%{$search}%");
         }
+
+        // Basic sorting (skip complex relationships for now)
+        if (in_array($sortKey, ['nim', 'angkatan', 'created_at'])) {
+            $query->orderBy($sortKey, $sortDir);
+        } else {
+            $query->orderBy('created_at', 'desc');
+        }
+
+        $mahasiswas = $query->paginate($perPage);
 
         return response()->json([
             'success' => true,
@@ -186,12 +201,12 @@ class MahasiswaController extends Controller
     )]
     public function show($id)
     {
-        $mahasiswa = Mahasiswa::with('user')->findOrFail($id);
+        $mahasiswa = Mahasiswa::with(['user', 'prodi'])->findOrFail($id);
 
         return response()->json([
             'success' => true,
             'message' => 'Data mahasiswa berhasil diambil',
-            'data' => $mahasiswa->load('user', 'prodi'),
+            'data' => $mahasiswa,
         ], 200);
     }
 }

@@ -145,7 +145,7 @@ class AuthController extends Controller
     )]
     public function me(Request $request)
     {
-        return response()->json($request->user());
+        return response()->json($request->user()->load('mahasiswa.prodi', 'dosen'));
     }
 
     #[OA\Post(
@@ -517,12 +517,34 @@ class AuthController extends Controller
             ]
         )
     )]
-    public function users()
+    public function users(Request $request)
     {
-        $users = User::with(['mahasiswa', 'dosen'])->get();
+        $search = $request->query('search');
+        $perPage = $request->query('per_page', 15);
+        $sortKey = $request->query('sort_key', 'name');
+        $sortDir = $request->query('sort_dir', 'asc');
+
+        $query = User::with(['mahasiswa', 'dosen']);
+
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('role', 'like', "%{$search}%");
+            });
+        }
+
+        if ($sortKey) {
+            $query->orderBy($sortKey, $sortDir);
+        } else {
+            $query->orderBy('name', 'asc');
+        }
+
+        $data = $query->paginate($perPage);
+
         return response()->json([
             'message' => 'Daftar pengguna berhasil diambil',
-            'data' => $users->load('mahasiswa', 'dosen'),
+            'data' => $data,
         ], 200);
     }
 
@@ -994,5 +1016,65 @@ class AuthController extends Controller
                 ]
             ]
         ]);
+    }
+
+    public function updateAvatar(Request $request)
+    {
+        $request->validate([
+            'avatar' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048'
+        ]);
+
+        $user = $request->user();
+
+        if ($request->hasFile('avatar')) {
+            $file = $request->file('avatar');
+            $user->avatar = $user->uploadToCloudinary($file, 'siam/avatars');
+            $user->save();
+
+            // Memuat relasi agar kembalian user lengkap
+            if ($user->role === 'mahasiswa') {
+                $user->load('mahasiswa.prodi');
+            } elseif ($user->role === 'dosen') {
+                $user->load('dosen');
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Avatar berhasil diperbarui',
+                'user' => $user
+            ]);
+        }
+
+        return response()->json(['success' => false, 'message' => 'Gagal mengunggah file'], 400);
+    }
+
+    public function updateUserAvatar(Request $request, $user_id)
+    {
+        $user = User::findOrFail($user_id);
+
+        $request->validate([
+            'avatar' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048'
+        ]);
+
+        if ($request->hasFile('avatar')) {
+            $file = $request->file('avatar');
+            $user->avatar = $user->uploadToCloudinary($file, 'siam/avatars');
+            $user->save();
+
+            // Memuat relasi
+            if ($user->role === 'mahasiswa') {
+                $user->load('mahasiswa.prodi');
+            } elseif ($user->role === 'dosen') {
+                $user->load('dosen');
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Avatar pengguna berhasil diperbarui',
+                'data' => $user
+            ]);
+        }
+
+        return response()->json(['success' => false, 'message' => 'Gagal mengunggah file'], 400);
     }
 }

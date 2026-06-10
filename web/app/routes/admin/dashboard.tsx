@@ -1,5 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import useSWR from 'swr';
+import type { DashboardResponse, DashboardStats } from '~/types/dashboard';
+import { SkeletonDashboard } from '~/components/ui/skeleton_dashboard';
 import api from "~/lib/api";
+import { handleApiError } from "~/lib/utils";
+
+export function meta() {
+  return [
+    { title: "Dashboard | SIAM Admin" },
+    { name: "description", content: "Ringkasan statistik akademik SIAM." },
+  ];
+}
 import AuthGuard from "~/components/auth_guard";
 import { 
   Users, 
@@ -13,6 +24,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { motion } from 'motion/react';
+import { Link } from 'react-router';
 import type { Activity } from "~/types/activity";
 
 import { 
@@ -26,35 +38,41 @@ import {
 } from 'recharts';
 
 export default function DashboardPage() {
-  const [stats, setStats] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
   const [range, setRange] = useState('7days');
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const response = await api.get(`/dashboard-stats?range=${range}`);
-        if (response.data.success) {
-          setStats(response.data.data);
-        }
-      } catch (error) {
-        console.error("Failed to fetch dashboard stats:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  // SWR Fetcher using axios instance
+  const fetcher = (url: string) => api.get<DashboardResponse>(url).then(res => res.data);
 
-    fetchStats();
-  }, [range]);
+  const { data: response, error, isLoading } = useSWR(
+    `/dashboard-stats?range=${range}`,
+    fetcher,
+    {
+      revalidateOnFocus: true,
+      dedupingInterval: 60000, // Cache for 1 minute
+    }
+  );
 
-  if (loading && !stats) {
+  const stats = response?.data;
+
+  if (isLoading) {
     return (
       <AuthGuard>
-        <div className="flex items-center justify-center min-h-[60vh] w-full">
-          <div className="flex flex-col items-center gap-3">
-            <Loader2 className="w-10 h-10 text-blue-500 animate-spin" />
-            <p className="text-slate-500 font-medium">Memuat data dashboard...</p>
+        <SkeletonDashboard />
+      </AuthGuard>
+    );
+  }
+
+  if (error || !stats) {
+    return (
+      <AuthGuard>
+        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+            <span className="text-red-500 font-bold text-2xl">!</span>
           </div>
+          <h3 className="text-lg font-semibold text-slate-900 mb-1">Gagal Memuat Dashboard</h3>
+          <p className="text-sm text-slate-500 max-w-sm mx-auto">
+            Terjadi kesalahan saat mengambil statistik atau koneksi server terputus.
+          </p>
         </div>
       </AuthGuard>
     );
@@ -128,9 +146,6 @@ export default function DashboardPage() {
                   <div className={`p-3 rounded-xl ${card.color} shadow-sm`}>
                     <Icon className="w-6 h-6" />
                   </div>
-                  <button className="text-slate-400 hover:text-slate-600">
-                    <MoreVertical className="w-5 h-5" />
-                  </button>
                 </div>
 
                 <div className="relative z-10">
@@ -160,7 +175,7 @@ export default function DashboardPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.4 }}
-            className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col min-h-[400px]"
+            className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col min-h-100"
           >
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-lg font-semibold text-slate-800">
@@ -177,7 +192,7 @@ export default function DashboardPage() {
               </select>
             </div>
 
-            <div className="flex-1 w-full h-[300px]">
+            <div className="flex-1 w-full h-75">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <defs>
@@ -231,9 +246,9 @@ export default function DashboardPage() {
               <h2 className="text-lg font-semibold text-slate-800">
                 Aktivitas Terbaru
               </h2>
-              <button className="text-blue-600 text-sm font-medium hover:text-blue-700">
+              <Link to="/admin/activity-logs" className="text-blue-600 text-sm font-medium hover:text-blue-700">
                 Lihat Semua
-              </button>
+              </Link>
             </div>
 
             <div className="flex flex-col gap-5 relative">

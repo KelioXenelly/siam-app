@@ -8,6 +8,7 @@ use App\Models\Pertemuan;
 use App\Models\SesiAbsensi;
 use App\Services\AbsensiService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use OpenApi\Attributes as OA;
 
 class PertemuanController extends Controller
@@ -93,27 +94,39 @@ class PertemuanController extends Controller
             )
         ]
     )]
-    public function index()
+    public function index(Request $request)
     {
-        $pertemuans = Pertemuan::query()
+        $search = $request->query('search');
+        $perPage = $request->query('per_page', 15);
+        $sortKey = $request->query('sort_key');
+        $sortDir = $request->query('sort_dir', 'asc');
+
+        $query = Pertemuan::query()
             ->join('kelas', 'pertemuans.kelas_id', '=', 'kelas.id')
             ->join('mata_kuliahs', 'kelas.mata_kuliah_id', '=', 'mata_kuliahs.id')
             ->with(['kelas.mataKuliah', 'kelas.ruangan'])
-            ->select('pertemuans.*')
-            ->orderBy('mata_kuliahs.kode_mk', 'asc')
-            ->orderBy('pertemuans.pertemuan_ke', 'asc')
-            ->get();
+            ->select('pertemuans.*');
 
-        if ($pertemuans->isEmpty()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Data pertemuan tidak ditemukan',
-            ]);
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('mata_kuliahs.nama_mk', 'like', "%{$search}%")
+                  ->orWhere('mata_kuliahs.kode_mk', 'like', "%{$search}%")
+                  ->orWhere('pertemuans.materi', 'like', "%{$search}%");
+            });
         }
+
+        if ($sortKey && in_array($sortKey, ['tanggal', 'pertemuan_ke', 'status'])) {
+            $query->orderBy("pertemuans.{$sortKey}", $sortDir);
+        } else {
+            $query->orderBy('mata_kuliahs.kode_mk', 'asc')
+                  ->orderBy('pertemuans.pertemuan_ke', 'asc');
+        }
+
+        $data = $query->paginate($perPage);
 
         return response()->json([
             'success' => true,
-            'data' => $pertemuans
+            'data' => $data
         ], 200);
     }
 
@@ -337,7 +350,7 @@ class PertemuanController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Pertemuan berhasil diambil',
-            'data' => $pertemuan->load('kelas'),
+            'data' => $pertemuan,
         ], 200);
     }
 
@@ -654,12 +667,13 @@ class PertemuanController extends Controller
     public function byKelas($kelas_id)
     {
         $data = Pertemuan::where('kelas_id', $kelas_id)
+            ->with(['kelas', 'kelas.mataKuliah'])
             ->orderBy('pertemuan_ke', 'asc')
             ->get();
 
         return response()->json([
             'success' => true,
-            'data' => $data->load('kelas', 'kelas.mataKuliah')
+            'data' => $data
         ]);
     }
 
@@ -726,38 +740,41 @@ class PertemuanController extends Controller
     )]
     public function start($pertemuan_id)
     {
-        $pertemuan = Pertemuan::findOrFail($pertemuan_id);
+        return DB::transaction(function () use ($pertemuan_id) {
+            $pertemuan = Pertemuan::lockForUpdate()->findOrFail($pertemuan_id);
 
-        // ❗ prevent double start
-        if ($pertemuan->started_at !== null) {
+            // ❗ prevent double start
+            if ($pertemuan->started_at !== null) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Pertemuan sudah dimulai'
+                ], 409);
+            }
+
+            // ❗ pastikan tidak ada session aktif lain
+            $active = Pertemuan::where('kelas_id', $pertemuan->kelas_id)
+                ->where('status', 'Berlangsung')
+                ->lockForUpdate()
+                ->exists();
+
+            if ($active) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Masih ada pertemuan yang berlangsung'
+                ], 409);
+            }
+
+            $pertemuan->update([
+                'status' => 'Berlangsung',
+                'started_at' => now()->format('H:i:s'),
+            ]);
+
             return response()->json([
-                'success' => false,
-                'message' => 'Pertemuan sudah dimulai'
-            ], 409);
-        }
-
-        // ❗ pastikan tidak ada session aktif lain
-        $active = Pertemuan::where('kelas_id', $pertemuan->kelas_id)
-            ->where('status', 'Berlangsung')
-            ->exists();
-
-        if ($active) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Masih ada pertemuan yang berlangsung'
-            ], 409);
-        }
-
-        $pertemuan->update([
-            'status' => 'Berlangsung',
-            'started_at' => now()->format('H:i:s'),
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Pertemuan dimulai',
-            'data' => $pertemuan
-        ]);
+                'success' => true,
+                'message' => 'Pertemuan dimulai',
+                'data' => $pertemuan
+            ]);
+        });
     }
 
     #[OA\Post(
@@ -823,43 +840,45 @@ class PertemuanController extends Controller
     )]
     public function end($pertemuan_id, AbsensiService $absensiService)
     {
-        $pertemuan = Pertemuan::with('kelas', 'sesiAbsensi')->findOrFail($pertemuan_id);
+        return DB::transaction(function () use ($pertemuan_id, $absensiService) {
+            $pertemuan = Pertemuan::with('kelas', 'sesiAbsensi')->lockForUpdate()->findOrFail($pertemuan_id);
 
-        // 0. Cek Kepemilikan
-        if ($pertemuan->kelas->dosen_id !== auth()->user()->dosen->id) {
+            // 0. Cek Kepemilikan
+            if ($pertemuan->kelas->dosen_id !== auth()->user()->dosen->id) {
+                return response()->json([
+                    'message' => 'Bukan kelas anda, anda tidak berhak mengakses kelas ini'
+                ], 403);
+            }
+
+            if ($pertemuan->started_at === null) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Pertemuan belum dimulai'
+                ], 409);
+            }
+
+            if ($pertemuan->ended_at !== null) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Pertemuan sudah selesai'
+                ], 409);
+            }
+
+            $pertemuan->update([
+                'status' => 'Selesai',
+                'ended_at' => now()->format('H:i:s'),
+            ]);
+
+            // 3. Auto-close sesi absensi jika ada yang masih terbuka
+            if ($pertemuan->sesiAbsensi && !$pertemuan->sesiAbsensi->is_closed) {
+                $absensiService->closeSession($pertemuan->sesiAbsensi->id);
+            }
+
             return response()->json([
-                'message' => 'Bukan kelas anda, anda tidak berhak mengakses kelas ini'
-            ], 403);
-        }
-
-        if ($pertemuan->started_at === null) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Pertemuan belum dimulai'
-            ], 409);
-        }
-
-        if ($pertemuan->ended_at !== null) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Pertemuan sudah selesai'
-            ], 409);
-        }
-
-        $pertemuan->update([
-            'status' => 'Selesai',
-            'ended_at' => now()->format('H:i:s'),
-        ]);
-
-        // 3. Auto-close sesi absensi jika ada yang masih terbuka
-        if ($pertemuan->sesiAbsensi && !$pertemuan->sesiAbsensi->is_closed) {
-            $absensiService->closeSession($pertemuan->sesiAbsensi->id);
-        }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Pertemuan diakhiri dan sesi absensi otomatis ditutup',
-            'data' => $pertemuan->load('sesiAbsensi')
-        ]);
+                'success' => true,
+                'message' => 'Pertemuan diakhiri dan sesi absensi otomatis ditutup',
+                'data' => $pertemuan->load('sesiAbsensi') // Using load here is fine because it loads a newly updated relationship
+            ]);
+        });
     }
 }

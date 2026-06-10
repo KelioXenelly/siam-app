@@ -12,5 +12,6 @@ export default [
     route("mata-kuliah", "routes/admin/mata_kuliah.tsx"),
     route("kelas", "routes/admin/kelas.tsx"),
     route("pertemuan", "routes/admin/pertemuan.tsx"),
+    route("activity-logs", "routes/admin/activity_logs.tsx"),
   ])
 ] satisfies RouteConfig;

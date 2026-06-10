@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
+
+export function meta() {
+  return [
+    { title: "Program Studi | SIAM Admin" },
+    { name: "description", content: "Kelola data program studi SIAM." },
+  ];
+}
 import {
   Plus,
   Search,
@@ -9,41 +16,39 @@ import {
   X,
   Check,
   BookOpen,
-} from "lucide-react";
+  Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { useTable } from "../../hooks/useTable";
+import { useServerTable } from "~/hooks/useServerTable";
+import type { Prodi as ProgramStudi } from '~/types/prodi';
+import { SkeletonTable } from "~/components/ui/skeleton_table";
+import { EmptyState } from "~/components/ui/empty_state";
 import { Pagination, SortableHeader } from "../../components/table_features";
 import type { Prodi } from "~/types/prodi";
 import api from "~/lib/api";
 
 export default function ProgramStudiPage() {
-  const [prodiList, setProdiList] = useState<Prodi[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [itemsPerPage, setItemsPerPage] = useState(10);
-
+  const [isSaving, setIsSaving] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState<
-    "create" | "edit" | "view" | "delete"
-  >("create");
+  const [modalMode, setModalMode] = useState<"create" | "edit" | "view" | "delete">("create");
   const [selectedProdi, setSelectedProdi] = useState<Prodi | null>(null);
   const [formData, setFormData] = useState<Partial<Prodi>>({});
-
-  const filteredData = prodiList.filter(
-    (p) =>
-      p.nama_prodi.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.kode_prodi.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.jenjang.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
 
   const {
     currentData,
     currentPage,
     setCurrentPage,
     totalPages,
-    requestSort,
-    sortConfig,
     totalItems,
-  } = useTable(filteredData, itemsPerPage);
+    itemsPerPage,
+    setItemsPerPage,
+    searchTerm,
+    setSearchTerm,
+    sortConfig,
+    requestSort,
+    isLoading,
+    refreshData
+  } = useServerTable<ProgramStudi>("/program-studi", 10);
+
 
   const handleItemsPerPageChange = (value: number) => {
     setItemsPerPage(value);
@@ -71,7 +76,20 @@ export default function ProgramStudiPage() {
     setFormData({});
   };
 
+  
+  // Close modal on Escape
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isModalOpen) {
+        handleCloseModal();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isModalOpen]);
+
   const handleSave = async () => {
+    setIsSaving(true);
     if (!formData.kode_prodi || !formData.nama_prodi || !formData.jenjang) {
       toast.error("Mohon lengkapi semua data wajib!");
       return;
@@ -87,7 +105,7 @@ export default function ProgramStudiPage() {
       try {
         const res = await api.post("/program-studi", newProdi);
         const createdProdi = res.data.data;
-        setProdiList([...prodiList, createdProdi]);
+        refreshData();
         toast.success(
           res.data.message || "Program Studi berhasil ditambahkan!",
         );
@@ -115,11 +133,7 @@ export default function ProgramStudiPage() {
           updatedProdi,
         );
         const updatedProdiFromServer = res.data.data;
-        setProdiList(
-          prodiList.map((p) =>
-            p.id === selectedProdi.id ? updatedProdiFromServer : p,
-          ),
-        );
+        await refreshData();
         toast.success(res.data.message || "Program Studi berhasil diperbarui!");
       } catch (error: any) {
         const errors = error.response?.data?.errors;
@@ -132,14 +146,17 @@ export default function ProgramStudiPage() {
       }
     }
     handleCloseModal();
+  setIsSaving(false);
   };
 
+
   const handleDelete = async (id: number) => {
+    setIsSaving(true);
     if (!selectedProdi) return;
 
     try {
       const res = await api.delete(`/program-studi/${id}`);
-      setProdiList(prodiList.filter((p) => p.id !== id));
+      refreshData();
       toast.success(res.data.message || "Program Studi berhasil dihapus!");
       handleCloseModal();
     } catch (error: any) {
@@ -147,13 +164,14 @@ export default function ProgramStudiPage() {
 
       toast.error(errors || "Gagal menghapus program studi.");
     }
+    setIsSaving(false);
   };
 
   useEffect(() => {
     const fetchProdi = async () => {
       try {
         const res = await api.get("/program-studi");
-        setProdiList(res.data.data);
+        refreshData();
       } catch (error) {
         toast.error("Gagal mengambil data program studi.");
       }
@@ -234,15 +252,14 @@ export default function ProgramStudiPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
-              {currentData.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={6}
-                    className="px-6 py-12 text-center text-slate-500"
-                  >
-                    Tidak ada prodi yang ditemukan.
-                  </td>
-                </tr>
+              {isLoading ? (
+                <SkeletonTable columns={6} rows={5} />
+              ) : currentData.length === 0 ? (
+                <EmptyState 
+                  title="Data Kosong"
+                  description="Belum ada data yang ditemukan. Silakan tambahkan data baru atau sesuaikan pencarian."
+                  colSpan={6}
+                />
               ) : (
                 currentData.map((p, index) => (
                   <tr
@@ -442,10 +459,11 @@ export default function ProgramStudiPage() {
                 {modalMode !== "view" && (
                   <button
                     onClick={handleSave}
-                    className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl font-medium text-sm hover:bg-blue-700 shadow-sm"
+                    disabled={isSaving}
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl font-medium text-sm hover:bg-blue-700 shadow-sm disabled:opacity-70"
                   >
-                    <Check className="w-4 h-4" />
-                    <span>Simpan Data</span>
+                    {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                    <span>{isSaving ? "Menyimpan..." : "Simpan Data"}</span>
                   </button>
                 )}
               </div>
@@ -516,9 +534,11 @@ export default function ProgramStudiPage() {
 
                 <button
                   onClick={() => handleDelete(selectedProdi!.id)}
-                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-xl transition shadow-sm"
+                  disabled={isSaving}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-xl transition shadow-sm disabled:opacity-70 inline-flex items-center gap-2"
                 >
-                  Hapus
+                  {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {isSaving ? "Menghapus..." : "Hapus"}
                 </button>
               </div>
             </motion.div>

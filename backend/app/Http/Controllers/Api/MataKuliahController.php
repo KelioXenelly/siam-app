@@ -64,21 +64,34 @@ class MataKuliahController extends Controller
             ]
         )
     )]
-    public function index()
+    public function index(Request $request)
     {
-        $mataKuliahs = MataKuliah::orderBy('kode_mk', 'asc')->get();
+        $search = $request->query('search');
+        $perPage = $request->query('per_page', 15);
+        $sortKey = $request->query('sort_key', 'kode_mk');
+        $sortDir = $request->query('sort_dir', 'asc');
 
-        if ($mataKuliahs->isEmpty()) {
-            return response()->json([
-                'success' => false,
-                'errors' => 'Data mata kuliah tidak ditemukan',
-            ], 404);
+        $query = MataKuliah::query();
+
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('kode_mk', 'like', "%{$search}%")
+                  ->orWhere('nama_mk', 'like', "%{$search}%");
+            });
         }
+
+        if ($sortKey) {
+            $query->orderBy($sortKey, $sortDir);
+        } else {
+            $query->orderBy('kode_mk', 'asc');
+        }
+
+        $data = $query->paginate($perPage);
 
         return response()->json([
             'success' => true,
             'message' => 'Data mata kuliah berhasil diambil',
-            'data' => $mataKuliahs
+            'data' => $data
         ], 200);
     }
 

@@ -1,5 +1,12 @@
 import React, { use, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
+
+export function meta() {
+  return [
+    { title: "Manajemen Kelas | SIAM Admin" },
+    { name: "description", content: "Kelola data kelas perkuliahan SIAM." },
+  ];
+}
 import {
   Plus,
   Search,
@@ -14,9 +21,11 @@ import {
   Calendar,
   Clock,
   MapPin,
-} from "lucide-react";
+  Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { useTable } from "../../hooks/useTable";
+import { useServerTable } from "../../hooks/useServerTable";
+import { SkeletonTable } from "~/components/ui/skeleton_table";
+import { EmptyState } from "~/components/ui/empty_state";
 import { Pagination, SortableHeader } from "../../components/table_features";
 import type { Kelas } from "~/types/kelas";
 import type { Mahasiswa } from "~/types/mahasiswa";
@@ -30,11 +39,9 @@ export default function KelasPage() {
   const [dosenList, setDosenList] = useState<Dosen[]>([]);
   const [mataKuliahList, setMataKuliahList] = useState<MataKuliah[]>([]);
   const [ruanganList, setRuanganList] = useState<Ruangan[]>([]);
-  const [kelasList, setKelasList] = useState<Kelas[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Modal states
+  const [isSaving, setIsSaving] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<
     "create" | "edit" | "view" | "delete"
@@ -48,31 +55,25 @@ export default function KelasPage() {
 
   const [formData, setFormData] = useState<Partial<Kelas>>({});
 
-  const filteredData = kelasList.filter(
-    (k) =>
-      k.kode_kelas.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      k.mata_kuliah?.nama_mk.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      k.dosen?.user?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      k.ruangan?.nama.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      k.hari.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      k.jam_mulai.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      k.jam_selesai.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      k.kapasitas.toString().includes(searchTerm.toString()),
-  );
-
   const {
     currentData,
     currentPage,
     setCurrentPage,
     totalPages,
-    requestSort,
-    sortConfig,
     totalItems,
-  } = useTable(filteredData, itemsPerPage);
+    itemsPerPage,
+    setItemsPerPage,
+    searchTerm,
+    setSearchTerm,
+    sortConfig,
+    requestSort,
+    isLoading,
+    refreshData
+  } = useServerTable<Kelas>("/kelas", 10);
 
   const handleItemsPerPageChange = (value: number) => {
     setItemsPerPage(value);
-    setCurrentPage(1); // ❗ reset biar gak out of range
+    setCurrentPage(1);
   };
 
   const handleOpenModal = (
@@ -108,7 +109,20 @@ export default function KelasPage() {
     return time.slice(0, 5);
   };
 
+  
+  // Close modal on Escape
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isModalOpen) {
+        handleCloseModal();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isModalOpen]);
+
   const handleSave = async () => {
+    setIsSaving(true);
     if (
       !formData.kode_kelas ||
       !formData.mata_kuliah_id ||
@@ -141,7 +155,7 @@ export default function KelasPage() {
 
       try {
         await api.post("/kelas", newKelas);
-        await fetchKelas();
+        await refreshData();
         toast.success("Kelas berhasil ditambahkan!");
       } catch (error: any) {
         const errors = error.response?.data?.errors;
@@ -169,7 +183,7 @@ export default function KelasPage() {
 
       try {
         await api.put(`/kelas/${selectedKelas.id}`, updatedKelas);
-        await fetchKelas();
+        await refreshData();
         toast.success("Kelas berhasil diperbarui!");
       } catch (error: any) {
         const errors = error.response?.data?.errors;
@@ -182,14 +196,17 @@ export default function KelasPage() {
       }
     }
     handleCloseModal();
+  setIsSaving(false);
   };
 
+
   const handleDelete = async (id: number) => {
+    setIsSaving(true);
     if (!selectedKelas) return;
 
     try {
       await api.delete(`/kelas/${selectedKelas.id}`);
-      await fetchKelas();
+      await refreshData();
       toast.success("Kelas berhasil dihapus!");
       handleCloseModal();
     } catch (error: any) {
@@ -197,6 +214,7 @@ export default function KelasPage() {
       console.log(errors);
       toast.error(errors || "Gagal menghapus kelas.");
     }
+    setIsSaving(false);
   };
 
   // --- Assign Mahasiswa Logic ---
@@ -215,7 +233,7 @@ export default function KelasPage() {
         mahasiswa_ids: assignedStudents,
       });
       toast.success("Mahasiswa berhasil ditugaskan ke kelas!");
-      await fetchKelas();
+      await refreshData();
       setIsAssignModalOpen(false);
     } catch (error: any) {
       const errors = error.response?.data?.errors;
@@ -242,26 +260,13 @@ export default function KelasPage() {
       m.nim.includes(assignSearchTerm),
   );
 
-  const fetchKelas = async () => {
-    try {
-      const res = await api.get("/kelas");
-      setKelasList(res.data.data);
-    } catch (error: any) {
-      const errors = error.response?.data?.errors;
-
-      if (errors) {
-        toast.error(errors[0]);
-      } else {
-        toast.error("Gagal mengambil data kelas.");
-      }
-    }
-  };
-
   useEffect(() => {
     const fetchMahasiswa = async () => {
       try {
-        const res = await api.get("/mahasiswa");
-        setMahasiswaList(res.data.data);
+        // Fetch with a large per_page to get all students for the local filter to work
+        const res = await api.get("/mahasiswa?per_page=1000");
+        // Handle both paginated (res.data.data.data) and non-paginated (res.data.data) responses
+        setMahasiswaList(res.data.data.data ? res.data.data.data : res.data.data);
       } catch (error: any) {
         const errors = error.response?.data?.errors;
 
@@ -319,7 +324,6 @@ export default function KelasPage() {
     fetchDosen();
     fetchMataKuliah();
     fetchRuangan();
-    fetchKelas();
   }, []);
 
   return (
@@ -394,15 +398,14 @@ export default function KelasPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
-              {currentData.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={6}
-                    className="px-6 py-12 text-center text-slate-500"
-                  >
-                    Tidak ada kelas yang ditemukan.
-                  </td>
-                </tr>
+              {isLoading ? (
+                <SkeletonTable columns={6} rows={5} />
+              ) : currentData.length === 0 ? (
+                <EmptyState 
+                  title="Data Kosong"
+                  description="Belum ada data yang ditemukan. Silakan tambahkan data baru atau sesuaikan pencarian."
+                  colSpan={6}
+                />
               ) : (
                 currentData.map((k, index) => (
                   <tr
@@ -761,10 +764,11 @@ export default function KelasPage() {
                 {modalMode !== "view" && (
                   <button
                     onClick={handleSave}
-                    className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl font-medium text-sm hover:bg-blue-700 shadow-sm"
+                    disabled={isSaving}
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl font-medium text-sm hover:bg-blue-700 shadow-sm disabled:opacity-70"
                   >
-                    <Check className="w-4 h-4" />
-                    <span>Simpan Data</span>
+                    {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                    <span>{isSaving ? "Menyimpan..." : "Simpan Data"}</span>
                   </button>
                 )}
               </div>
@@ -950,9 +954,11 @@ export default function KelasPage() {
 
                 <button
                   onClick={() => handleDelete(selectedKelas!.id)}
-                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-xl transition shadow-sm"
+                  disabled={isSaving}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-xl transition shadow-sm disabled:opacity-70 inline-flex items-center gap-2"
                 >
-                  Hapus
+                  {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {isSaving ? "Menghapus..." : "Hapus"}
                 </button>
               </div>
             </motion.div>

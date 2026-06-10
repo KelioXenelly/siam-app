@@ -158,7 +158,7 @@ class DosenController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Data dosen berhasil diambil',
-            'data' => $dosen->load('user'),
+            'data' => $dosen,
         ], 200);
     }
 }

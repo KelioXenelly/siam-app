@@ -4,6 +4,7 @@ export type User = {
   email: string;
   role: 'admin' | 'mahasiswa' | 'dosen';
   is_active: boolean;
+  avatar?: string | null;
   nim_nidn: string;
   prodi_id: number;
   angkatan: string;

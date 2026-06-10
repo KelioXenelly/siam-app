@@ -1,13 +1,14 @@
-import { Search, Bell, ChevronDown, LogOut } from "lucide-react";
+import { Search, Bell, ChevronDown, LogOut, Menu } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { toast } from "sonner";
+import { API_HOST } from '~/lib/api';
 import { useAuth } from "~/context/auth_context";
 import { logout } from "~/lib/auth";
 
-export default function Navbar() {
-  const { user } = useAuth();
+export default function Navbar({ onMenuClick }: { onMenuClick?: () => void }) {
+  const { user, isLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -21,6 +22,7 @@ export default function Navbar() {
     if (path === "/admin/mata-kuliah") return "Manajemen Mata Kuliah";
     if (path === "/admin/kelas") return "Manajemen Kelas";
     if (path === "/admin/pertemuan") return "Manajemen Pertemuan";
+    if (path === "/admin/activity-logs") return "Log Aktivitas";
     return "Admin Panel";
   };
 
@@ -31,46 +33,56 @@ export default function Navbar() {
   };
 
   return (
-    <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0 z-10">
-      <h1 className="text-xl font-semibold text-slate-800">{getPageTitle()}</h1>
+    <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-8 shrink-0 z-10">
+      <div className="flex items-center gap-3">
+        <button
+          className="p-2 -ml-2 text-slate-500 hover:text-slate-700 lg:hidden"
+          onClick={onMenuClick}
+        >
+          <Menu className="w-6 h-6" />
+        </button>
+        <h1 className="text-xl font-semibold text-slate-800 hidden sm:block">{getPageTitle()}</h1>
+        <h1 className="text-lg font-semibold text-slate-800 sm:hidden">SIAM</h1>
+      </div>
 
-      <div className="flex items-center gap-6 relative">
-        {/* <div className="relative hidden md:block">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            placeholder="Search everything..."
-            className="pl-9 pr-4 py-2 bg-slate-100 border-none rounded-full text-sm w-64 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all"
-          />
-        </div>
-
-        <button className="relative p-2 text-slate-400 hover:text-slate-600 transition-colors">
-          <Bell className="w-5 h-5" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-        </button> */}
-
-        {/* <div className="h-8 w-px bg-slate-200"></div> */}
-
+      <div className="flex items-center gap-4 sm:gap-6 relative">
         <button
           className="flex items-center gap-3 hover:opacity-80 transition-opacity"
-          onClick={() => setIsProfileOpen(!isProfileOpen)}
+          onClick={() => !isLoading && setIsProfileOpen(!isProfileOpen)}
         >
-          <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center border border-indigo-200">
-            <span className="text-indigo-600 font-bold text-sm">A</span>
-          </div>
-          <div className="text-left hidden md:block">
-            <p className="text-sm font-medium text-slate-700 leading-tight">
-              {user ? user.name : "Loading..."}
-            </p>
-            <p className="text-xs text-slate-500">
-              {user
-                ? user.role.charAt(0).toUpperCase() + user.role.slice(1)
-                : "Loading..."}
-            </p>
-          </div>
-          <ChevronDown
-            className={`w-4 h-4 text-slate-400 transition-transform ${isProfileOpen ? "rotate-180" : ""}`}
-          />
+          {isLoading ? (
+            <>
+              <div className="w-8 h-8 rounded-full bg-slate-200 animate-pulse shrink-0" />
+              <div className="text-left hidden md:block">
+                <div className="h-4 w-24 bg-slate-200 rounded animate-pulse mb-1" />
+                <div className="h-3 w-16 bg-slate-200 rounded animate-pulse" />
+              </div>
+              <ChevronDown className="w-4 h-4 text-slate-300" />
+            </>
+          ) : (
+            <>
+              <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center border border-indigo-200 overflow-hidden shrink-0">
+                {user?.avatar ? (
+                  <img src={`${API_HOST}${user.avatar}`} alt={user.name} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-indigo-600 font-bold text-sm">
+                    {user ? user.name.charAt(0).toUpperCase() : "A"}
+                  </span>
+                )}
+              </div>
+              <div className="text-left hidden md:block">
+                <p className="text-sm font-medium text-slate-700 leading-tight">
+                  {user?.name}
+                </p>
+                <p className="text-xs text-slate-500">
+                  {user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : ""}
+                </p>
+              </div>
+              <ChevronDown
+                className={`w-4 h-4 text-slate-400 transition-transform ${isProfileOpen ? "rotate-180" : ""}`}
+              />
+            </>
+          )}
         </button>
 
         <AnimatePresence>

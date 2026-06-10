@@ -75,21 +75,34 @@ class ProdiController extends Controller
             ]
         )
     )]
-    public function index()
+    public function index(Request $request)
     {
-        $prodis = Prodi::orderBy('kode_prodi', 'asc')->get();
+        $search = $request->query('search');
+        $perPage = $request->query('per_page', 15);
+        $sortKey = $request->query('sort_key', 'kode_prodi');
+        $sortDir = $request->query('sort_dir', 'asc');
 
-        if ($prodis->isEmpty()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Data Program Studi tidak ditemukan',
-            ], 404);
+        $query = Prodi::query();
+
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('kode_prodi', 'like', "%{$search}%")
+                  ->orWhere('nama_prodi', 'like', "%{$search}%");
+            });
         }
+
+        if ($sortKey) {
+            $query->orderBy($sortKey, $sortDir);
+        } else {
+            $query->orderBy('kode_prodi', 'asc');
+        }
+
+        $data = $query->paginate($perPage);
 
         return response()->json([
             'success' => true,
             'message' => 'Data Program Studi berhasil diambil',
-            'data' => $prodis
+            'data' => $data
         ], 200);
     }
 

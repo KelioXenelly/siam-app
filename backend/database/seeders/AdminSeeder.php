@@ -15,16 +15,16 @@ class AdminSeeder extends Seeder
     public function run(): void
     {
         User::firstOrCreate(
-        // 1. Kriteria Pencarian (Hanya email yang unik)
-        ['email' => 'admin@itbss.ac.id'], 
-        
-        // 2. Data Tambahan (Hanya diisi jika data belum ada)
-        [
-            'name'     => 'Admin SIAM',
-            'password' => Hash::make('admin123'),
-            'role'     => 'admin',
-            'is_active' => true,
-        ]
-    );
+            // 1. Kriteria Pencarian (Hanya email yang unik)
+            ['email' => 'admin@itbss.ac.id'],
+
+            // 2. Data Tambahan (Hanya diisi jika data belum ada)
+            [
+                'name' => 'Admin SIAM',
+                'password' => Hash::make('admin123'),
+                'role' => 'admin',
+                'is_active' => true,
+            ]
+        );
     }
 }
