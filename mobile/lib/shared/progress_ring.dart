@@ -9,28 +9,40 @@ class ProgressRing extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 120,
-      height: 120,
-      child: CustomPaint(
-        painter: _ProgressPainter(progress),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                "${progress.toInt()}%",
-                style: const TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                ),
+      width: 140, // ✨ Lebih besar sedikit
+      height: 140,
+      child: TweenAnimationBuilder<double>(
+        tween: Tween<double>(begin: 0, end: progress),
+        duration: const Duration(seconds: 2), // ✨ Animasi 2 detik
+        curve: Curves.easeOutCubic,
+        builder: (context, value, child) {
+          return CustomPaint(
+            painter: _ProgressPainter(value),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    "${value.toInt()}%",
+                    style: const TextStyle(
+                      fontSize: 32, // ✨ Font lebih besar
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF1E293B),
+                    ),
+                  ),
+                  const Text(
+                    "Kehadiran",
+                    style: TextStyle(
+                      fontSize: 13, 
+                      color: Colors.grey,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ),
-              const Text(
-                "Kehadiran",
-                style: TextStyle(fontSize: 12, color: Colors.grey),
-              ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -43,28 +55,29 @@ class _ProgressPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final strokeWidth = 8.0;
+    final strokeWidth = 12.0; // ✨ Garis lebih tebal dan bold
     final radius = (size.width / 2) - strokeWidth;
 
     final center = Offset(size.width / 2, size.height / 2);
 
     /// 🔥 BACKGROUND (FULL CIRCLE)
     final bgPaint = Paint()
-      ..color = Colors.grey.shade200
+      ..color = Colors.grey.withValues(alpha: 0.15)
       ..strokeWidth = strokeWidth
       ..style = PaintingStyle.stroke;
 
     canvas.drawCircle(center, radius, bgPaint);
 
-    /// 🔥 PROGRESS (FULL RING STYLE)
+    /// 🔥 PROGRESS (FULL RING STYLE WITH GLOW)
     final rect = Rect.fromCircle(center: center, radius: radius);
 
     final gradient = const SweepGradient(
       startAngle: -pi / 2,
       endAngle: 3 * pi / 2,
       colors: [
-        Color(0xFF2563EB),
-        Color(0xFF3B82F6),
+        Color(0xFF60A5FA), // Light Blue
+        Color(0xFF2563EB), // Blue
+        Color(0xFF4F46E5), // Indigo
       ],
     );
 
@@ -72,9 +85,13 @@ class _ProgressPainter extends CustomPainter {
       ..shader = gradient.createShader(rect)
       ..strokeWidth = strokeWidth
       ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
+      ..strokeCap = StrokeCap.round; // Rounded edges
 
     final sweepAngle = 2 * pi * (progress / 100);
+
+    // ✨ GLOW EFFECT (Shadow under the stroke)
+    final path = Path()..addArc(rect, -pi / 2, sweepAngle);
+    canvas.drawShadow(path, const Color(0xFF2563EB).withValues(alpha: 0.5), 10, false);
 
     canvas.drawArc(
       rect,

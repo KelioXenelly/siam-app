@@ -5,6 +5,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:mobile/dosen/services/dosen_service.dart';
 import 'package:mobile/core/api_constants.dart';
+import 'package:mobile/shared/glass_card.dart';
 
 class DosenSesiPage extends StatefulWidget {
   final int pertemuanId;
@@ -426,90 +427,122 @@ class _DosenSesiPageState extends State<DosenSesiPage> {
             child: Column(
               children: [
                 
-                // 🔵 HEADER SECTION
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.fromLTRB(20, 60, 20, 30),
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Color(0xFF7C3AED), Color(0xFF4F46E5)],
-                    ),
-                    borderRadius: BorderRadius.only(
-                      bottomLeft: Radius.circular(40),
-                      bottomRight: Radius.circular(40),
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      
-                      // Row Back Button & GPS Indicator
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.pop(context);
-                            },
-                            child: Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Icon(Icons.arrow_back, color: Colors.white),
-                            ),
-                          ),
-                          
-                          // GPS pill
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: _isMockGps 
-                                ? Colors.orangeAccent.withValues(alpha: 0.3) 
-                                : Colors.greenAccent.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: _isMockGps ? Colors.orangeAccent : Colors.greenAccent, 
-                                width: 1
-                              )
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  _isMockGps ? Icons.location_searching : Icons.gps_fixed, 
-                                  color: Colors.white, 
-                                  size: 14
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  _isMockGps ? "Mock GPS Active" : "GPS Lock: OK",
-                                  style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
-                                )
-                              ],
-                            ),
-                          )
-                        ],
-                      ),
-                      
-                      const SizedBox(height: 20),
-                      
-                      Text(
-                        widget.namaMataKuliah,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
+                // 🔵 PREMIUM HEADER SECTION
+                Stack(
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.fromLTRB(20, 60, 20, 40),
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Color(0xFF7C3AED), Color(0xFF4F46E5), Color(0xFF312E81)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.only(
+                          bottomLeft: Radius.circular(40),
+                          bottomRight: Radius.circular(40),
                         ),
                       ),
-                      
-                      Text(
-                        "${widget.topikPertemuan} • ${widget.kodeKelas} (${widget.tahunAjaran})",
-                        style: const TextStyle(color: Colors.white70, fontSize: 14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          
+                          // Row Back Button & GPS Indicator
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.pop(context);
+                                },
+                                child: Container(
+                                  width: 44,
+                                  height: 44,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                                  ),
+                                  child: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+                                ),
+                              ),
+                              
+                              // GPS pill
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: _isMockGps 
+                                    ? Colors.orangeAccent.withValues(alpha: 0.25) 
+                                    : Colors.greenAccent.withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: _isMockGps ? Colors.orangeAccent.withValues(alpha: 0.5) : Colors.greenAccent.withValues(alpha: 0.5), 
+                                    width: 1
+                                  )
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      _isMockGps ? Icons.location_searching_rounded : Icons.gps_fixed_rounded, 
+                                      color: Colors.white, 
+                                      size: 14
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      _isMockGps ? "Mock GPS Active" : "GPS Lock: OK",
+                                      style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                                    )
+                                  ],
+                                ),
+                              )
+                            ],
+                          ),
+                          
+                          const SizedBox(height: 24),
+                          
+                          Text(
+                            widget.namaMataKuliah,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 26,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            "${widget.topikPertemuan} • ${widget.kodeKelas} (${widget.tahunAjaran})",
+                            style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 14, fontWeight: FontWeight.w500),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                    Positioned(
+                      top: -40,
+                      right: -40,
+                      child: Container(
+                        width: 150,
+                        height: 150,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white.withValues(alpha: 0.1),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      bottom: -20,
+                      left: -20,
+                      child: Container(
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white.withValues(alpha: 0.08),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
 
                 const SizedBox(height: 24),
@@ -537,7 +570,7 @@ class _DosenSesiPageState extends State<DosenSesiPage> {
                     children: [
                       const Text(
                         "Daftar Kehadiran Mahasiswa",
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF1E293B)),
                       ),
                       
                       // Live pill count
@@ -596,163 +629,193 @@ class _DosenSesiPageState extends State<DosenSesiPage> {
 
   // 🔹 WIDGET: ACTIVE QR CARD
   Widget _buildActiveQrCard(double progressVal) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(30),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.deepPurpleAccent.withValues(alpha: 0.08),
-            blurRadius: 20,
-            spreadRadius: 5,
-          )
-        ],
-      ),
-      child: Column(
-        children: [
-          const Text(
-            "SILAKAN SCAN UNTUK ABSENSI",
-            style: TextStyle(
-              fontWeight: FontWeight.bold, 
-              color: Colors.deepPurple, 
-              letterSpacing: 1.5,
-              fontSize: 12,
-            ),
-          ),
-          
-          const SizedBox(height: 20),
-          
-          // QR CODE IMAGE
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: Colors.grey.shade100, width: 2),
-            ),
-            child: QrImageView(
-              data: _qrData!,
-              version: QrVersions.auto,
-              size: 200.0,
-            ),
-          ),
-          
-          const SizedBox(height: 24),
-          
-          // TIMER COUNTDOWN ROW
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: GlassCard(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
             children: [
-              SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(
-                  value: progressVal,
-                  strokeWidth: 3,
-                  backgroundColor: Colors.grey.shade200,
-                  color: Colors.deepPurpleAccent,
+              const Text(
+                "SILAKAN SCAN UNTUK ABSENSI",
+                style: TextStyle(
+                  fontWeight: FontWeight.w800, 
+                  color: Color(0xFF7C3AED), 
+                  letterSpacing: 1.5,
+                  fontSize: 12,
                 ),
               ),
-              const SizedBox(width: 12),
-              const Text("QR berlaku hingga: ", style: TextStyle(color: Colors.grey)),
-              Text(
-                _formatDuration(_timeLeft),
-                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red, fontSize: 16),
-              )
+              
+              const SizedBox(height: 24),
+              
+              // QR CODE IMAGE
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: Colors.grey.shade200, width: 2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF7C3AED).withValues(alpha: 0.1),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    )
+                  ]
+                ),
+                child: QrImageView(
+                  data: _qrData!,
+                  version: QrVersions.auto,
+                  size: 200.0,
+                ),
+              ),
+              
+              const SizedBox(height: 24),
+              
+              // TIMER COUNTDOWN ROW
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.red.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        value: progressVal,
+                        strokeWidth: 3,
+                        backgroundColor: Colors.red.withValues(alpha: 0.2),
+                        color: Colors.red,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    const Text("QR berlaku hingga: ", style: TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.w600, fontSize: 13)),
+                    Text(
+                      _formatDuration(_timeLeft),
+                      style: const TextStyle(fontWeight: FontWeight.w800, color: Colors.red, fontSize: 16),
+                    )
+                  ],
+                ),
+              ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }
 
   // 🔹 WIDGET: CLOSED OR EXPIRED QR CARD
   Widget _buildClosedOrExpiredCard(bool hasQrExpired) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.all(30),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(30),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 15,
-          )
-        ],
-      ),
-      child: Column(
-        children: [
-          Icon(
-            _isClosed ? Icons.lock : Icons.timer_off_outlined,
-            color: _isClosed ? Colors.redAccent : Colors.orangeAccent,
-            size: 60,
-          ),
-          
-          const SizedBox(height: 16),
-          
-          Text(
-            _isClosed ? "SESI PRESENSI DITUTUP" : "QR CODE EXPIRED",
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          
-          const SizedBox(height: 8),
-          
-          Text(
-            _isClosed 
-              ? "Sesi absen QR telah diakhiri. Sisa mahasiswa yang belum presensi dicatat Alfa."
-              : "Batas waktu 10 menit presensi habis. Anda dapat memperbarui masa aktif QR di bawah.",
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.grey),
-          ),
-          
-          if (!_isClosed && hasQrExpired) ...[
-            const SizedBox(height: 20),
-            ElevatedButton.icon(
-              onPressed: _regenerateQRFlow,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF7C3AED),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: GlassCard(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: (_isClosed ? Colors.red : Colors.orange).withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  _isClosed ? Icons.lock_rounded : Icons.timer_off_rounded,
+                  color: _isClosed ? Colors.red : Colors.orange,
+                  size: 50,
+                ),
               ),
-              icon: const Icon(Icons.refresh),
-              label: const Text("Generate QR Baru", style: TextStyle(fontWeight: FontWeight.bold)),
-            )
-          ]
-        ],
+              
+              const SizedBox(height: 20),
+              
+              Text(
+                _isClosed ? "SESI PRESENSI DITUTUP" : "QR CODE EXPIRED",
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF1E293B)),
+              ),
+              
+              const SizedBox(height: 12),
+              
+              Text(
+                _isClosed 
+                  ? "Sesi absen QR telah diakhiri. Sisa mahasiswa yang belum presensi dicatat Alfa."
+                  : "Batas waktu 10 menit presensi habis. Anda dapat memperbarui masa aktif QR di bawah.",
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.w500, height: 1.5),
+              ),
+              
+              if (!_isClosed && hasQrExpired) ...[
+                const SizedBox(height: 24),
+                Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(colors: [Color(0xFF7C3AED), Color(0xFF4F46E5)]),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(color: const Color(0xFF7C3AED).withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 4))
+                    ],
+                  ),
+                  child: ElevatedButton.icon(
+                    onPressed: _regenerateQRFlow,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      foregroundColor: Colors.white,
+                      shadowColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    icon: const Icon(Icons.refresh_rounded),
+                    label: const Text("Generate QR Baru", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                  ),
+                )
+              ]
+            ],
+          ),
+        ),
       ),
     );
   }
 
   // 🔹 WIDGET: ERROR STATE CARD
   Widget _buildErrorCard() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: Colors.red.shade100, width: 2),
-      ),
-      child: Column(
-        children: [
-          const Icon(Icons.error_outline, color: Colors.red, size: 50),
-          const SizedBox(height: 12),
-          Text(
-            _errorMessage ?? "Terjadi kesalahan",
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontWeight: FontWeight.bold),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: GlassCard(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.red.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.error_outline_rounded, color: Colors.red, size: 50),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                _errorMessage ?? "Terjadi kesalahan",
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Color(0xFF1E293B)),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: _initSessionFlow,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.redAccent,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                ),
+                child: const Text("Coba Lagi", style: TextStyle(fontWeight: FontWeight.w800)),
+              )
+            ],
           ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: _initSessionFlow,
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
-            child: const Text("Coba Lagi"),
-          )
-        ],
+        ),
       ),
     );
   }
@@ -831,20 +894,18 @@ class _DosenSesiPageState extends State<DosenSesiPage> {
   // 🔹 WIDGET: STUDENT Kehadiran LIST
   Widget _buildStudentList() {
     if (_attendances.isEmpty) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(30),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: const Center(
-          child: Column(
-            children: [
-              Icon(Icons.people_outline, color: Colors.grey, size: 40),
-              SizedBox(height: 12),
-              Text("Belum ada mahasiswa yang masuk kelas.", style: TextStyle(color: Colors.grey)),
-            ],
+      return GlassCard(
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(40),
+          child: const Center(
+            child: Column(
+              children: [
+                Icon(Icons.people_alt_rounded, color: Color(0xFFCBD5E1), size: 50),
+                SizedBox(height: 16),
+                Text("Belum ada mahasiswa yang masuk kelas.", style: TextStyle(color: Color(0xFF94A3B8), fontWeight: FontWeight.w500)),
+              ],
+            ),
           ),
         ),
       );
@@ -891,72 +952,74 @@ class _DosenSesiPageState extends State<DosenSesiPage> {
           onTap: () {
             _showManualStatusDialog(item['id'], name, status);
           },
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10)
-              ]
-            ),
-            child: Row(
-              children: [
-                
-                // Avatar
-                selfieUrl != null
-                  ? GestureDetector(
-                      onTap: () => _showImageDialog(selfieUrl, name),
-                      child: CircleAvatar(
-                        radius: 20,
-                        backgroundColor: Colors.grey.shade200,
-                        backgroundImage: NetworkImage(selfieUrl),
-                      ),
-                    )
-                  : CircleAvatar(
-                      radius: 20,
-                      backgroundColor: pillText.withValues(alpha: 0.15),
-                      child: Text(
-                        initial,
-                        style: TextStyle(color: pillText, fontWeight: FontWeight.bold),
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: GlassCard(
+              child: Container(
+                decoration: BoxDecoration(
+                  border: Border(left: BorderSide(color: pillText, width: 4)),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    
+                    // Avatar
+                    selfieUrl != null
+                      ? GestureDetector(
+                          onTap: () => _showImageDialog(selfieUrl, name),
+                          child: CircleAvatar(
+                            radius: 24,
+                            backgroundColor: Colors.grey.shade200,
+                            backgroundImage: NetworkImage(selfieUrl),
+                          ),
+                        )
+                      : CircleAvatar(
+                          radius: 24,
+                          backgroundColor: pillText.withValues(alpha: 0.15),
+                          child: Text(
+                            initial,
+                            style: TextStyle(color: pillText, fontWeight: FontWeight.w800, fontSize: 18),
+                          ),
+                        ),
+                    
+                    const SizedBox(width: 16),
+                    
+                    // Name & Check-in details
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            name,
+                            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: Color(0xFF1E293B)),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            "NIM $nim • $checkInTime WIB",
+                            style: const TextStyle(color: Color(0xFF64748B), fontSize: 12, fontWeight: FontWeight.w500),
+                          ),
+                        ],
                       ),
                     ),
-                
-                const SizedBox(width: 12),
-                
-                // Name & Check-in details
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        name,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                    
+                    // Status Pill
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: pillBg,
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      Text(
-                        "NIM $nim • $checkInTime WIB",
-                        style: const TextStyle(color: Colors.grey, fontSize: 11),
+                      child: Text(
+                        status,
+                        style: TextStyle(color: pillText, fontWeight: FontWeight.w800, fontSize: 12),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                
-                // Status Pill
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: pillBg,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    status,
-                    style: TextStyle(color: pillText, fontWeight: FontWeight.bold, fontSize: 11),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         );
@@ -967,48 +1030,73 @@ class _DosenSesiPageState extends State<DosenSesiPage> {
   // 🔹 WIDGET: BOTTOM GLASS BAR
   Widget _buildBottomActionBar() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.9),
-        border: Border(top: BorderSide(color: Colors.grey.shade200, width: 1)),
-      ),
-      child: Row(
-        children: [
-          
-          // TUTUP SESI ABSENSI
-          if (!_isClosed) ...[
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: _closeSesiFlow,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.red,
-                  side: const BorderSide(color: Colors.red, width: 1.5),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                ),
-                icon: const Icon(Icons.lock_outline),
-                label: const Text("Tutup Absensi", style: TextStyle(fontWeight: FontWeight.bold)),
-              ),
-            ),
-            const SizedBox(width: 16),
-          ],
-          
-          // AKHIRI KELAS
-          Expanded(
-            child: ElevatedButton.icon(
-              onPressed: _endPertemuanFlow,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF7C3AED),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                elevation: 0,
-              ),
-              icon: const Icon(Icons.exit_to_app),
-              label: const Text("Akhiri Kelas", style: TextStyle(fontWeight: FontWeight.bold)),
-            ),
-          ),
+        color: Colors.white.withValues(alpha: 0.95),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -5),
+          )
         ],
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(30),
+          topRight: Radius.circular(30),
+        ),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          children: [
+            
+            // TUTUP SESI ABSENSI
+            if (!_isClosed) ...[
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _closeSesiFlow,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFEF4444),
+                    side: const BorderSide(color: Color(0xFFEF4444), width: 1.5),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  icon: const Icon(Icons.lock_outline_rounded),
+                  label: const Text("Tutup Absensi", style: TextStyle(fontWeight: FontWeight.w800)),
+                ),
+              ),
+              const SizedBox(width: 16),
+            ],
+            
+            // AKHIRI KELAS
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF7C3AED), Color(0xFF4F46E5)],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(color: const Color(0xFF7C3AED).withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 4))
+                  ]
+                ),
+                child: ElevatedButton.icon(
+                  onPressed: _endPertemuanFlow,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    foregroundColor: Colors.white,
+                    shadowColor: Colors.transparent,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    elevation: 0,
+                  ),
+                  icon: const Icon(Icons.exit_to_app_rounded),
+                  label: const Text("Akhiri Kelas", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

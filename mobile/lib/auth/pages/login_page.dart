@@ -128,16 +128,47 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF1E40AF), Color(0xFF3B82F6), Color(0xFFEFF6FF)],
+      body: Stack(
+        children: [
+          // Background Gradient
+          Container(
+            width: double.infinity,
+            height: double.infinity,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF2563EB), Color(0xFF4F46E5), Color(0xFF312E81)],
+              ),
+            ),
           ),
-        ),
-        child: Center(
+          // Ornamen Geometris
+          Positioned(
+            top: -50,
+            right: -50,
+            child: Container(
+              width: 200,
+              height: 200,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.1),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: -100,
+            left: -50,
+            child: Container(
+              width: 250,
+              height: 250,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.08),
+              ),
+            ),
+          ),
+          SafeArea(
+            child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: Column(
@@ -256,7 +287,8 @@ class _LoginPageState extends State<LoginPage> {
                           _role == 'mahasiswa'
                               ? 'Contoh: 23110001'
                               : 'Contoh: nidn@kampus.ac.id',
-                          Icons.person_outline,
+                          Icons.person_rounded,
+                          Colors.indigo,
                         ),
                       ),
                       const SizedBox(height: 18),
@@ -270,7 +302,8 @@ class _LoginPageState extends State<LoginPage> {
                         decoration:
                             _inputDecoration(
                               '••••••••',
-                              Icons.lock_outline,
+                              Icons.lock_rounded,
+                              const Color(0xFF2563EB),
                             ).copyWith(
                               suffixIcon: IconButton(
                                 icon: Icon(
@@ -304,35 +337,50 @@ class _LoginPageState extends State<LoginPage> {
 
                       const SizedBox(height: 12),
 
-                      SizedBox(
+                      Container(
                         width: double.infinity,
-                        height: 56,
-                        child: ElevatedButton(
-                          onPressed: _isLoading ? null : _handleLogin,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF2563EB),
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            elevation: 0,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF2563EB), Color(0xFF4F46E5)],
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
                           ),
-                          child: _isLoading
-                              ? const SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2.5,
-                                  ),
-                                )
-                              : const Text(
-                                  "Masuk Sekarang",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF4F46E5).withValues(alpha: 0.3),
+                              blurRadius: 15,
+                              offset: const Offset(0, 8),
+                            )
+                          ],
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: _isLoading ? null : _handleLogin,
+                            borderRadius: BorderRadius.circular(16),
+                            child: Center(
+                              child: _isLoading
+                                  ? const SizedBox(
+                                      width: 24,
+                                      height: 24,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 3,
+                                      ),
+                                    )
+                                  : const Text(
+                                      "Masuk Sekarang",
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w800,
+                                        color: Colors.white,
+                                        letterSpacing: 1,
+                                      ),
+                                    ),
+                            ),
+                          ),
                         ),
                       ),
                     ],
@@ -352,8 +400,10 @@ class _LoginPageState extends State<LoginPage> {
           ),
         ),
       ),
-    );
-  }
+    ],
+  ),
+);
+}
 
   Widget _buildRoleTab(String value, String label) {
     bool isSelected = _role == value;
@@ -383,30 +433,40 @@ class _LoginPageState extends State<LoginPage> {
         padding: const EdgeInsets.only(bottom: 8, left: 4),
         child: Text(
           text,
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            color: Colors.blueGrey[800],
-            fontSize: 13,
+          style: const TextStyle(
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF1E293B),
+            fontSize: 14,
           ),
         ),
       ),
     );
   }
 
-  InputDecoration _inputDecoration(String hint, IconData icon) {
+  InputDecoration _inputDecoration(String hint, IconData icon, Color iconColor) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+      hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 14, fontWeight: FontWeight.w500),
       filled: true,
-      fillColor: Colors.grey[50],
-      prefixIcon: Icon(icon, color: Colors.grey[400], size: 20),
+      fillColor: Colors.white,
+      prefixIcon: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: iconColor.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, color: iconColor, size: 20),
+        ),
+      ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(color: Colors.grey[200]!, width: 1.5),
+        borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.2)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.8),
+        borderSide: const BorderSide(color: Color(0xFF2563EB), width: 2),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
     );

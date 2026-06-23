@@ -3,6 +3,7 @@ import 'package:mobile/auth/models/user_model.dart';
 import 'package:mobile/auth/services/auth_service.dart';
 import 'package:mobile/dosen/services/dosen_service.dart';
 import 'package:mobile/shared/shimmer_loading.dart';
+import 'package:mobile/shared/glass_card.dart';
 
 class DosenDashboardPage extends StatefulWidget {
   final Function(int)? onTabChange;
@@ -80,84 +81,121 @@ class _DosenDashboardPageState extends State<DosenDashboardPage> {
           child: Column(
           children: [
             /// 🔵 PREMIUM HEADER
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(24, 60, 24, 40),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFF7C3AED), Color(0xFF4F46E5)],
-                ),
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(40),
-                  bottomRight: Radius.circular(40),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Color(0x4D4F46E5),
-                    blurRadius: 20,
-                    offset: Offset(0, 10),
-                  )
-                ],
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Selamat datang kembali,", 
-                          style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 14)
+            Stack(
+              children: [
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.fromLTRB(24, 60, 24, 40),
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFF7C3AED), Color(0xFF4F46E5), Color(0xFF312E81)],
+                    ),
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(40),
+                      bottomRight: Radius.circular(40),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Selamat datang kembali,", 
+                              style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 14, fontWeight: FontWeight.w600)
+                            ),
+                            const SizedBox(height: 6),
+                            _isLoading 
+                              ? Container(
+                                  width: 150, height: 28, 
+                                  decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(8))
+                                )
+                              : Text(
+                                  _user?.name ?? "Dosen",
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: -0.5,
+                                  ),
+                                ),
+                            const SizedBox(height: 4),
+                            _isLoading
+                              ? Container(
+                                  width: 100, height: 16, margin: const EdgeInsets.only(top: 6), 
+                                  decoration: BoxDecoration(color: Colors.white12, borderRadius: BorderRadius.circular(4))
+                                )
+                              : Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  margin: const EdgeInsets.only(top: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+                                  ),
+                                  child: Text(
+                                    "NIDN: ${_user?.identifier ?? '-'}",
+                                    style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
+                                  ),
+                                ),
+                          ],
                         ),
-                        const SizedBox(height: 6),
-                        _isLoading 
-                          ? Container(
-                              width: 150, height: 28, 
-                              decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(8))
-                            )
-                          : Text(
-                              _user?.name ?? "Dosen",
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: -0.5,
-                              ),
-                            ),
-                        const SizedBox(height: 4),
-                        _isLoading
-                          ? Container(
-                              width: 100, height: 16, margin: const EdgeInsets.only(top: 6), 
-                              decoration: BoxDecoration(color: Colors.white12, borderRadius: BorderRadius.circular(4))
-                            )
-                          : Text(
-                              "NIDN: ${_user?.identifier ?? '-'}",
-                              style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 13),
-                            ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    width: 55, height: 55,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 2),
-                    ),
-                    child: Text(
-                      _user != null ? _getInitials(_user!.name) : "D",
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
                       ),
+                      Container(
+                        width: 60, height: 60,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 3),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.1),
+                              blurRadius: 15,
+                              spreadRadius: 2,
+                            )
+                          ],
+                        ),
+                        child: Text(
+                          _user != null ? _getInitials(_user!.name) : "D",
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Positioned(
+                  top: -40,
+                  right: -40,
+                  child: Container(
+                    width: 150,
+                    height: 150,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withValues(alpha: 0.1),
                     ),
                   ),
-                ],
-              ),
+                ),
+                Positioned(
+                  bottom: -20,
+                  left: -20,
+                  child: Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withValues(alpha: 0.08),
+                    ),
+                  ),
+                ),
+              ],
             ),
 
             if (_isLoading)
@@ -256,110 +294,105 @@ class _DosenDashboardPageState extends State<DosenDashboardPage> {
   }) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              blurRadius: 20,
-              color: Colors.black.withValues(alpha: 0.03),
-              offset: const Offset(0, 4),
-            )
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Icon(icon, color: color, size: 26),
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 16.0),
+        child: GlassCard(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Icon(icon, color: color, size: 28),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Color(0xFF1E293B))),
+                      const SizedBox(height: 4),
+                      Text(subtitle, style: TextStyle(color: Colors.blueGrey[400], fontSize: 13, fontWeight: FontWeight.w500)),
+                    ],
+                  ),
+                ),
+                Icon(Icons.chevron_right_rounded, color: Colors.blueGrey[300])
+              ],
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF1E293B))),
-                  const SizedBox(height: 2),
-                  Text(subtitle, style: TextStyle(color: Colors.blueGrey[400], fontSize: 13)),
-                ],
-              ),
-            ),
-            Icon(Icons.chevron_right_rounded, color: Colors.blueGrey[200])
-          ],
+          ),
         ),
       ),
     );
   }
 
   Widget _statCard(String title, String value, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.blueGrey[50]!, width: 1),
-      ),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
-            child: Icon(Icons.show_chart_rounded, color: color, size: 18),
-          ),
-          const SizedBox(height: 12),
-          Text(value, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: Color(0xFF1E293B))),
-          const SizedBox(height: 2),
-          Text(title, style: TextStyle(color: Colors.blueGrey[400], fontSize: 12, fontWeight: FontWeight.w500)),
-        ],
+    return GlassCard(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
+              child: Icon(Icons.show_chart_rounded, color: color, size: 20),
+            ),
+            const SizedBox(height: 12),
+            Text(value, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: Color(0xFF1E293B))),
+            const SizedBox(height: 2),
+            Text(title, style: TextStyle(color: Colors.blueGrey[400], fontSize: 12, fontWeight: FontWeight.w600)),
+          ],
+        ),
       ),
     );
   }
 
   Widget _kelasCard(String title, String time, String room) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.blueGrey[50]!, width: 1),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 45, height: 45,
-            decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(12)),
-            child: const Icon(Icons.class_outlined, color: Color(0xFF64748B)),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12.0),
+      child: GlassCard(
+        child: Container(
+          decoration: BoxDecoration(
+            border: const Border(
+              left: BorderSide(color: Color(0xFF7C3AED), width: 4),
+            ),
+            borderRadius: BorderRadius.circular(8),
           ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF1E293B))),
-                const SizedBox(height: 4),
-                Row(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                width: 45, height: 45,
+                decoration: BoxDecoration(color: const Color(0xFF7C3AED).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+                child: const Icon(Icons.class_rounded, color: Color(0xFF7C3AED)),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.access_time, size: 12, color: Colors.blueGrey[300]),
-                    const SizedBox(width: 4),
-                    Text(time, style: TextStyle(color: Colors.blueGrey[400], fontSize: 12)),
-                    const SizedBox(width: 12),
-                    Icon(Icons.location_on_outlined, size: 12, color: Colors.blueGrey[300]),
-                    const SizedBox(width: 4),
-                    Text(room, style: TextStyle(color: Colors.blueGrey[400], fontSize: 12)),
+                    Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Color(0xFF1E293B))),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        const Icon(Icons.access_time_rounded, size: 14, color: Colors.grey),
+                        const SizedBox(width: 4),
+                        Text(time, style: const TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w500)),
+                        const SizedBox(width: 16),
+                        const Icon(Icons.location_on_rounded, size: 14, color: Colors.grey),
+                        const SizedBox(width: 4),
+                        Text(room, style: const TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w500)),
+                      ],
+                    ),
                   ],
                 ),
-              ],
-            ),
-          )
-        ],
+              )
+            ],
+          ),
+        ),
       ),
     );
   }

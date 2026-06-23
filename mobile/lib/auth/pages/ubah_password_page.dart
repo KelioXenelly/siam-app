@@ -76,7 +76,11 @@ class _UbahPasswordPageState extends State<UbahPasswordPage> {
       appBar: AppBar(
         title: const Text(
           "Ubah Password",
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+          style: TextStyle(
+            fontWeight: FontWeight.w800, 
+            color: Colors.white,
+            letterSpacing: 0.5,
+          ),
         ),
         backgroundColor: const Color(0xFF2563EB),
         iconTheme: const IconThemeData(color: Colors.white),
@@ -87,20 +91,48 @@ class _UbahPasswordPageState extends State<UbahPasswordPage> {
         child: Column(
           children: [
             // 🔵 Header Gradient Extension
-            Container(
-              width: double.infinity,
-              height: 40,
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFF2563EB), Color(0xFF4F46E5)],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
+            Stack(
+              children: [
+                Container(
+                  width: double.infinity,
+                  height: 60,
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Color(0xFF2563EB), Color(0xFF4F46E5), Color(0xFF312E81)],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(40),
+                      bottomRight: Radius.circular(40),
+                    ),
+                  ),
                 ),
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(40),
-                  bottomRight: Radius.circular(40),
+                Positioned(
+                  top: -40,
+                  right: -20,
+                  child: Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withValues(alpha: 0.1),
+                    ),
+                  ),
                 ),
-              ),
+                Positioned(
+                  bottom: -20,
+                  left: -10,
+                  child: Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withValues(alpha: 0.08),
+                    ),
+                  ),
+                ),
+              ],
             ),
             
             Padding(
@@ -113,23 +145,29 @@ class _UbahPasswordPageState extends State<UbahPasswordPage> {
                     const Text(
                       "Keamanan Akun",
                       style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF1E293B),
                       ),
                     ),
                     const SizedBox(height: 8),
                     const Text(
                       "Pastikan password baru Anda terdiri dari minimal 6 karakter demi keamanan akun Anda.",
-                      style: TextStyle(color: Colors.grey, height: 1.5),
+                      style: TextStyle(
+                        color: Color(0xFF64748B), 
+                        height: 1.5,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 32),
 
                     // Password Lama
                     _buildPasswordField(
                       controller: _oldPasswordController,
                       label: "Password Lama",
                       obscureText: _obscureOld,
+                      iconColor: Colors.indigo,
                       onToggleVisibility: () {
                         setState(() => _obscureOld = !_obscureOld);
                       },
@@ -147,6 +185,7 @@ class _UbahPasswordPageState extends State<UbahPasswordPage> {
                       controller: _newPasswordController,
                       label: "Password Baru",
                       obscureText: _obscureNew,
+                      iconColor: const Color(0xFF2563EB),
                       onToggleVisibility: () {
                         setState(() => _obscureNew = !_obscureNew);
                       },
@@ -164,6 +203,7 @@ class _UbahPasswordPageState extends State<UbahPasswordPage> {
                       controller: _confirmPasswordController,
                       label: "Konfirmasi Password Baru",
                       obscureText: _obscureConfirm,
+                      iconColor: const Color(0xFF059669),
                       onToggleVisibility: () {
                         setState(() => _obscureConfirm = !_obscureConfirm);
                       },
@@ -174,38 +214,53 @@ class _UbahPasswordPageState extends State<UbahPasswordPage> {
                         return null;
                       },
                     ),
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 48),
 
                     // Tombol Submit
-                    SizedBox(
+                    Container(
                       width: double.infinity,
-                      height: 55,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _submit,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF2563EB),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          elevation: 2,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF2563EB), Color(0xFF4F46E5)],
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
                         ),
-                        child: _isLoading
-                            ? const SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 3,
-                                ),
-                              )
-                            : const Text(
-                                "Simpan Password",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF4F46E5).withValues(alpha: 0.3),
+                            blurRadius: 15,
+                            offset: const Offset(0, 8),
+                          )
+                        ],
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: _isLoading ? null : _submit,
+                          borderRadius: BorderRadius.circular(16),
+                          child: Center(
+                            child: _isLoading
+                                ? const SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 3,
+                                    ),
+                                  )
+                                : const Text(
+                                    "Simpan Password",
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w800,
+                                      color: Colors.white,
+                                      letterSpacing: 1,
+                                    ),
+                                  ),
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -222,6 +277,7 @@ class _UbahPasswordPageState extends State<UbahPasswordPage> {
     required TextEditingController controller,
     required String label,
     required bool obscureText,
+    required Color iconColor,
     required VoidCallback onToggleVisibility,
     required String? Function(String?) validator,
   }) {
@@ -229,29 +285,49 @@ class _UbahPasswordPageState extends State<UbahPasswordPage> {
       controller: controller,
       obscureText: obscureText,
       validator: validator,
+      style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF1E293B)),
       decoration: InputDecoration(
         labelText: label,
+        labelStyle: const TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.w500),
         filled: true,
         fillColor: Colors.white,
-        prefixIcon: const Icon(Icons.lock_outline, color: Colors.blue),
+        prefixIcon: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: iconColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(Icons.lock_rounded, color: iconColor, size: 20),
+          ),
+        ),
         suffixIcon: IconButton(
           icon: Icon(
-            obscureText ? Icons.visibility_off : Icons.visibility,
-            color: Colors.grey,
+            obscureText ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+            color: const Color(0xFF94A3B8),
           ),
           onPressed: onToggleVisibility,
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Colors.grey.shade300),
+          borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.2)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Colors.grey.shade300),
+          borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.2)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Colors.blue, width: 2),
+          borderSide: const BorderSide(color: Color(0xFF2563EB), width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: Colors.red, width: 1),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: Colors.red, width: 2),
         ),
       ),
     );
