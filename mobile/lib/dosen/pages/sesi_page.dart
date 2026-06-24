@@ -3,9 +3,9 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:mobile/dosen/services/dosen_service.dart';
-import 'package:mobile/core/api_constants.dart';
-import 'package:mobile/shared/glass_card.dart';
+import 'package:siam_mobile/dosen/services/dosen_service.dart';
+import 'package:siam_mobile/core/api_constants.dart';
+import 'package:siam_mobile/shared/glass_card.dart';
 
 class DosenSesiPage extends StatefulWidget {
   final int pertemuanId;

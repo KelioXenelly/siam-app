@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:mobile/dosen/services/dosen_service.dart';
-import 'package:mobile/shared/dosen_bottom_nav.dart';
-import 'package:mobile/dosen/pages/sesi_page.dart';
-import 'package:mobile/shared/glass_card.dart';
+import 'package:siam_mobile/dosen/services/dosen_service.dart';
+import 'package:siam_mobile/shared/dosen_bottom_nav.dart';
+import 'package:siam_mobile/dosen/pages/sesi_page.dart';
+import 'package:siam_mobile/shared/glass_card.dart';
 
 class DosenDetailKelasPage extends StatefulWidget {
   final int kelasId;

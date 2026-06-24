@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:mobile/mahasiswa/services/mahasiswa_service.dart';
-import 'package:mobile/shared/glass_card.dart';
+import 'package:siam_mobile/mahasiswa/services/mahasiswa_service.dart';
+import 'package:siam_mobile/shared/glass_card.dart';
 import 'package:intl/intl.dart';
 
 class KelasDetailPage extends StatefulWidget {

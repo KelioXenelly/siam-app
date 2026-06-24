@@ -1,9 +1,9 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
-import 'package:mobile/core/dio_client.dart';
-import 'package:mobile/core/storage_service.dart';
-import 'package:mobile/core/dio_exception_handler.dart';
-import 'package:mobile/auth/models/user_model.dart';
+import 'package:siam_mobile/core/dio_client.dart';
+import 'package:siam_mobile/core/storage_service.dart';
+import 'package:siam_mobile/core/dio_exception_handler.dart';
+import 'package:siam_mobile/auth/models/user_model.dart';
 
 class AuthService {
   final Dio _dio = DioClient.dio;

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:mobile/auth/services/auth_service.dart';
-import 'package:mobile/shared/glass_card.dart';
+import 'package:siam_mobile/auth/services/auth_service.dart';
+import 'package:siam_mobile/shared/glass_card.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});

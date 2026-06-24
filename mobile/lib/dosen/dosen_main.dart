@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:mobile/dosen/pages/dashboard_page.dart';
-import 'package:mobile/dosen/pages/kelas_page.dart';
-import 'package:mobile/dosen/pages/profile_page.dart';
-import 'package:mobile/shared/dosen_bottom_nav.dart';
+import 'package:siam_mobile/dosen/pages/dashboard_page.dart';
+import 'package:siam_mobile/dosen/pages/kelas_page.dart';
+import 'package:siam_mobile/dosen/pages/profile_page.dart';
+import 'package:siam_mobile/shared/dosen_bottom_nav.dart';
 
 class DosenMain extends StatefulWidget {
   const DosenMain({super.key});

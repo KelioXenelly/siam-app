@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mobile/auth/services/auth_service.dart';
+import 'package:siam_mobile/auth/services/auth_service.dart';
 
 class UbahPasswordPage extends StatefulWidget {
   const UbahPasswordPage({super.key});

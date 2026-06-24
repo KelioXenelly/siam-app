@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:mobile/auth/models/user_model.dart';
-import 'package:mobile/auth/services/auth_service.dart';
-import 'package:mobile/dosen/services/dosen_service.dart';
-import 'package:mobile/shared/shimmer_loading.dart';
-import 'package:mobile/shared/glass_card.dart';
+import 'package:siam_mobile/auth/models/user_model.dart';
+import 'package:siam_mobile/auth/services/auth_service.dart';
+import 'package:siam_mobile/dosen/services/dosen_service.dart';
+import 'package:siam_mobile/shared/shimmer_loading.dart';
+import 'package:siam_mobile/shared/glass_card.dart';
 
 class DosenDashboardPage extends StatefulWidget {
   final Function(int)? onTabChange;

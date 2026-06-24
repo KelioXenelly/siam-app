@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:mobile/shared/shimmer_loading.dart';
-import 'package:mobile/dosen/services/dosen_service.dart';
-import 'package:mobile/dosen/pages/kelas_detail_page.dart';
-import 'package:mobile/shared/glass_card.dart';
+import 'package:siam_mobile/shared/shimmer_loading.dart';
+import 'package:siam_mobile/dosen/services/dosen_service.dart';
+import 'package:siam_mobile/dosen/pages/kelas_detail_page.dart';
+import 'package:siam_mobile/shared/glass_card.dart';
 
 class DosenKelasPage extends StatefulWidget {
   const DosenKelasPage({super.key});
