@@ -1,20 +1,26 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
-import 'package:mobile/core/storage_service.dart';
-import 'package:mobile/auth/pages/login_page.dart';
-import 'package:mobile/auth/pages/ubah_password_page.dart';
-import 'package:mobile/dosen/pages/kelas_page.dart';
-import 'package:mobile/dosen/pages/profile_page.dart';
-import 'package:mobile/mahasiswa/mahasiswa_main.dart';
-import 'package:mobile/dosen/dosen_main.dart';
-import 'package:mobile/mahasiswa/pages/profile_page.dart';
-import 'package:mobile/mahasiswa/pages/kelas_page.dart';
-import 'package:mobile/mahasiswa/pages/riwayat_page.dart';
+import 'package:siam_mobile/core/storage_service.dart';
+import 'package:siam_mobile/auth/pages/login_page.dart';
+import 'package:siam_mobile/auth/pages/ubah_password_page.dart';
+import 'package:siam_mobile/dosen/pages/kelas_page.dart';
+import 'package:siam_mobile/dosen/pages/profile_page.dart';
+import 'package:siam_mobile/mahasiswa/mahasiswa_main.dart';
+import 'package:siam_mobile/dosen/dosen_main.dart';
+import 'package:siam_mobile/mahasiswa/pages/profile_page.dart';
+import 'package:siam_mobile/mahasiswa/pages/kelas_page.dart';
+import 'package:siam_mobile/mahasiswa/pages/riwayat_page.dart';
 
 final GlobalKey<NavigatorState> globalNavigatorKey = GlobalKey<NavigatorState>();
 
-void main() {
+void main() async {
   // Ensure plugin services are initialized
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Load environment variables
+  await dotenv.load(fileName: ".env");
+  
   runApp(const MyApp());
 }
 
@@ -41,6 +47,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2563EB)),
         useMaterial3: true,
+        textTheme: GoogleFonts.poppinsTextTheme(Theme.of(context).textTheme),
       ),
       routes: {
         '/login': (context) => const LoginPage(),

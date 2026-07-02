@@ -1,10 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:mobile/core/api_constants.dart';
-import 'package:mobile/auth/models/user_model.dart';
-import 'package:mobile/auth/services/auth_service.dart';
-import 'package:mobile/shared/glass_card.dart';
+import 'package:siam_mobile/core/api_constants.dart';
+import 'package:siam_mobile/auth/models/user_model.dart';
+import 'package:siam_mobile/auth/services/auth_service.dart';
+import 'package:siam_mobile/shared/glass_card.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -71,53 +71,59 @@ class _ProfilePageState extends State<ProfilePage> {
         child: Column(
           children: [
 
-            /// 🔵 HEADER
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(20, 60, 20, 50),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFF2563EB), Color(0xFF4F46E5)],
-                ),
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(40),
-                  bottomRight: Radius.circular(40),
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-
-                  /// 🏷️ TITLE
-                  const Center(
-                    child: Text(
-                      "Profil Saya",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
+            /// 🔵 HEADER DENGAN DEEP GLASSMORPHISM
+            Stack(
+              children: [
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.fromLTRB(20, 60, 20, 50),
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Color(0xFF2563EB), Color(0xFF4F46E5), Color(0xFF312E81)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(40),
+                      bottomRight: Radius.circular(40),
                     ),
                   ),
-
-                  const SizedBox(height: 20),
-
-                  /// 👤 PROFILE INFO
-                  Row(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
+                      /// 🏷️ TITLE
+                      const Text(
+                        "Profil Saya",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 30),
+
+                      /// 👤 PROFILE INFO (Centered)
                       GestureDetector(
                         onTap: _isLoading ? null : _uploadAvatar,
                         child: Stack(
                           alignment: Alignment.bottomRight,
                           children: [
                             Container(
-                              width: 80,
-                              height: 80,
+                              width: 100,
+                              height: 100,
                               alignment: Alignment.center,
                               decoration: BoxDecoration(
                                 color: Colors.white.withValues(alpha: 0.2),
                                 shape: BoxShape.circle,
-                                border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+                                border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 3),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.1),
+                                    blurRadius: 20,
+                                    spreadRadius: 5,
+                                  )
+                                ],
                                 image: (_user?.avatar != null)
                                     ? DecorationImage(
                                         image: NetworkImage(ApiConstants.baseUrl.replaceAll('/api', '') + _user!.avatar!),
@@ -129,123 +135,190 @@ class _ProfilePageState extends State<ProfilePage> {
                                   ? Text(
                                       _getInitials(_user?.name ?? ""),
                                       style: const TextStyle(
-                                        fontSize: 32,
-                                        fontWeight: FontWeight.bold,
+                                        fontSize: 36,
+                                        fontWeight: FontWeight.w800,
                                         color: Colors.white,
                                       ),
                                     )
                                   : null,
                             ),
                             Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: const BoxDecoration(
-                                color: Colors.white,
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF2563EB),
                                 shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white, width: 2),
                               ),
-                              child: const Icon(Icons.camera_alt, size: 16, color: Color(0xFF2563EB)),
+                              child: const Icon(Icons.camera_alt_rounded, size: 16, color: Colors.white),
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(width: 16),
+                      const SizedBox(height: 16),
                       if (_isLoading)
                         const CircularProgressIndicator(color: Colors.white)
                       else
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                _user?.name ?? "Nama Tidak Diketahui",
+                        Column(
+                          children: [
+                            Text(
+                              _user?.name ?? "Nama Tidak Diketahui",
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 24,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              _user?.email ?? "-",
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.8),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+                              ),
+                              child: Text(
+                                "NIM: ${_user?.identifier ?? '-'}",
                                 style: const TextStyle(
                                   color: Colors.white,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 1,
                                 ),
                               ),
-                              Text(
-                                _user?.email ?? "-",
-                                style: const TextStyle(color: Colors.white70),
-                              ),
-                              const SizedBox(height: 6),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.2),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Text(
-                                  "NIM: ${_user?.identifier ?? '-'}",
-                                  style: const TextStyle(color: Colors.white),
-                                ),
-                              )
-                            ],
-                          ),
+                            )
+                          ],
                         )
                     ],
-                  )
-                ],
-              ),
+                  ),
+                ),
+                // Ornamen Geometris
+                Positioned(
+                  top: -40,
+                  right: -40,
+                  child: Container(
+                    width: 150,
+                    height: 150,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withValues(alpha: 0.08),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  bottom: -20,
+                  left: -20,
+                  child: Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withValues(alpha: 0.08),
+                    ),
+                  ),
+                ),
+              ],
             ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
 
             /// 🔥 CONTENT
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  
+                  const Padding(
+                    padding: EdgeInsets.only(left: 4, bottom: 12),
+                    child: Text(
+                      "Informasi Pribadi",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF1E293B),
+                      ),
+                    ),
+                  ),
 
                   /// 📋 INFO CARD
                   if (_isLoading)
-                    const CircularProgressIndicator()
+                    const Center(child: CircularProgressIndicator())
                   else
                     GlassCard(
                       child: Column(
                         children: [
-                          _buildItem(Icons.person, "Nama Lengkap", _user?.name ?? "-"),
+                          _buildItem(Icons.person_rounded, "Nama Lengkap", _user?.name ?? "-", Colors.blue),
                           _divider(),
-                          _buildItem(Icons.email, "Email", _user?.email ?? "-"),
+                          _buildItem(Icons.email_rounded, "Email", _user?.email ?? "-", Colors.orange),
                           _divider(),
-                          _buildItem(Icons.badge, "NIM", _user?.identifier ?? "-"),
+                          _buildItem(Icons.badge_rounded, "NIM", _user?.identifier ?? "-", Colors.purple),
                           _divider(),
-                          _buildItem(Icons.school, "Program Studi", _user?.prodiName ?? "-"),
+                          _buildItem(Icons.school_rounded, "Program Studi", _user?.prodiName ?? "-", Colors.green),
                           _divider(),
-                          _buildItem(Icons.person_outline, "Role", _user?.role ?? "-"),
+                          _buildItem(Icons.stars_rounded, "Role", _user?.role ?? "-", Colors.teal),
                         ],
                       ),
                     ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 24),
 
                   /// ⚙️ SETTINGS
-                  const Align(
-                    alignment: Alignment.centerLeft,
+                  const Padding(
+                    padding: EdgeInsets.only(left: 4, bottom: 12),
                     child: Text(
                       "Pengaturan",
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF1E293B),
+                      ),
                     ),
                   ),
-
-                  const SizedBox(height: 10),
 
                   GestureDetector(
                     onTap: () {
                       Navigator.pushNamed(context, '/ubah-password');
                     },
                     child: GlassCard(
-                      child: Row(
-                        children: const [
-                          Icon(Icons.key, color: Colors.blue),
-                          SizedBox(width: 10),
-                          Expanded(child: Text("Ubah Password")),
-                          Icon(Icons.chevron_right),
-                        ],
+                      child: Padding(
+                        padding: const EdgeInsets.all(4.0),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: Colors.indigo.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(Icons.lock_reset_rounded, color: Colors.indigo),
+                            ),
+                            const SizedBox(width: 16),
+                            const Expanded(
+                              child: Text(
+                                "Ubah Password",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF334155),
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ),
+                            const Icon(Icons.chevron_right_rounded, color: Colors.grey),
+                          ],
+                        ),
                       ),
                     ),
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 32),
 
                   /// 🔴 LOGOUT
                   GestureDetector(
@@ -262,28 +335,37 @@ class _ProfilePageState extends State<ProfilePage> {
                     },
                     child: Container(
                       width: double.infinity,
-                      height: 55,
+                      height: 60,
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
-                          colors: [Colors.red, Colors.redAccent],
+                          colors: [Color(0xFFEF4444), Color(0xFFDC2626)],
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
                         ),
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.red.withValues(alpha: 0.3),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
+                            color: const Color(0xFFDC2626).withValues(alpha: 0.3),
+                            blurRadius: 15,
+                            offset: const Offset(0, 8),
                           )
                         ],
                       ),
-                      child: const Center(
-                        child: Text(
-                          "Logout",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Icon(Icons.logout_rounded, color: Colors.white),
+                          SizedBox(width: 8),
+                          Text(
+                            "Logout",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 1,
+                            ),
                           ),
-                        ),
+                        ],
                       ),
                     ),
                   ),
@@ -299,19 +381,40 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   /// 🔹 ITEM BUILDER
-  Widget _buildItem(IconData icon, String label, String value) {
+  Widget _buildItem(IconData icon, String label, String value, MaterialColor color) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      padding: const EdgeInsets.all(8.0),
       child: Row(
         children: [
-          Icon(icon, color: Colors.blue),
-          const SizedBox(width: 10),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1E293B),
+                    fontSize: 15,
+                  ),
+                ),
               ],
             ),
           )
@@ -321,7 +424,10 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _divider() {
-    return const Divider(height: 1);
+    return Padding(
+      padding: const EdgeInsets.only(left: 60),
+      child: Divider(height: 1, color: Colors.grey.withValues(alpha: 0.2)),
+    );
   }
 
   String _getInitials(String name) {

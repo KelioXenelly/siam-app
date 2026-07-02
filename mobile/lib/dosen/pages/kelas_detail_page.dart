@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:mobile/dosen/services/dosen_service.dart';
-import 'package:mobile/shared/dosen_bottom_nav.dart';
-import 'package:mobile/dosen/pages/sesi_page.dart';
+import 'package:siam_mobile/dosen/services/dosen_service.dart';
+import 'package:siam_mobile/shared/dosen_bottom_nav.dart';
+import 'package:siam_mobile/dosen/pages/sesi_page.dart';
+import 'package:siam_mobile/shared/glass_card.dart';
 
 class DosenDetailKelasPage extends StatefulWidget {
   final int kelasId;
@@ -183,94 +184,126 @@ class _DosenDetailKelasPageState extends State<DosenDetailKelasPage> {
           child: Column(
           children: [
 
-            // 🔵 HEADER
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(20, 60, 20, 30),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFF7C3AED), Color(0xFF4F46E5)],
-                ),
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(40),
-                  bottomRight: Radius.circular(40),
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-
-                  // BACK BUTTON
-                  GestureDetector(
-                    onTap: () {
-                      if (Navigator.of(context).canPop()) {
-                        Navigator.of(context).pop();
-                      } else {
-                        Navigator.pushReplacementNamed(context, '/dosen/kelas');
-                      }
-                    },
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(12),
+            // 🔵 PREMIUM HEADER
+            Stack(
+              children: [
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.fromLTRB(20, 60, 20, 40),
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Color(0xFF7C3AED), Color(0xFF4F46E5), Color(0xFF312E81)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(40),
+                      bottomRight: Radius.circular(40),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // BACK BUTTON
+                      GestureDetector(
+                        onTap: () {
+                          if (Navigator.of(context).canPop()) {
+                            Navigator.of(context).pop();
+                          } else {
+                            Navigator.pushReplacementNamed(context, '/dosen/kelas');
+                          }
+                        },
+                        child: Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                          ),
+                          child: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+                        ),
                       ),
-                      child: const Icon(Icons.arrow_back, color: Colors.white),
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  Text(
-                    widget.namaMataKuliah,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-
-                  Text(
-                    "${widget.kodeKelas} • SMT ${widget.semester} (${widget.tahunAjaran})",
-                    style: const TextStyle(color: Colors.white70),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // 📊 PROGRESS
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      const SizedBox(height: 24),
+                      Text(
+                        widget.namaMataKuliah,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 26,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        "${widget.kodeKelas} • SMT ${widget.semester} (${widget.tahunAjaran})",
+                        style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontWeight: FontWeight.w500),
+                      ),
+                      const SizedBox(height: 24),
+                      // 📊 PROGRESS
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                        ),
+                        child: Column(
                           children: [
-                            const Text("Progress", style: TextStyle(color: Colors.white)),
-                            Text(
-                              "$_completedCount/${_meetings.length} Pertemuan",
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text("Progress", style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontWeight: FontWeight.w600)),
+                                Text(
+                                  "$_completedCount/${_meetings.length} Pertemuan",
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ],
                             ),
+                            const SizedBox(height: 12),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: LinearProgressIndicator(
+                                minHeight: 8,
+                                value: _meetings.isEmpty ? 0 : _completedCount / _meetings.length,
+                                backgroundColor: Colors.white.withValues(alpha: 0.15),
+                                valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
+                            )
                           ],
                         ),
-                        const SizedBox(height: 8),
-                        LinearProgressIndicator(
-                          value: _meetings.isEmpty ? 0 : _completedCount / _meetings.length,
-                          backgroundColor: Colors.white24,
-                          color: Colors.white,
-                        )
-                      ],
+                      )
+                    ],
+                  ),
+                ),
+                Positioned(
+                  top: -40,
+                  right: -40,
+                  child: Container(
+                    width: 150,
+                    height: 150,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withValues(alpha: 0.1),
                     ),
-                  )
-                ],
-              ),
+                  ),
+                ),
+                Positioned(
+                  bottom: -20,
+                  left: -20,
+                  child: Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withValues(alpha: 0.08),
+                    ),
+                  ),
+                ),
+              ],
             ),
 
             const SizedBox(height: 16),
@@ -280,11 +313,11 @@ class _DosenDetailKelasPageState extends State<DosenDetailKelasPage> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 children: [
-                  Expanded(child: _statBox("${_meetings.length}", "Total Sesi", Colors.blue)),
+                  Expanded(child: _statBox("${_meetings.length}", "Total Sesi", const Color(0xFF3B82F6))),
                   const SizedBox(width: 10),
-                  Expanded(child: _statBox("$_completedCount", "Selesai", Colors.green)),
+                  Expanded(child: _statBox("$_completedCount", "Selesai", const Color(0xFF10B981))),
                   const SizedBox(width: 10),
-                  Expanded(child: _statBox("${_meetings.length - _completedCount}", "Tersisa", Colors.purple)),
+                  Expanded(child: _statBox("${_meetings.length - _completedCount}", "Tersisa", const Color(0xFF8B5CF6))),
                 ],
               ),
             ),
@@ -298,7 +331,7 @@ class _DosenDetailKelasPageState extends State<DosenDetailKelasPage> {
                 alignment: Alignment.centerLeft,
                 child: Text(
                   "Daftar Pertemuan",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF1E293B)),
                 ),
               ),
             ),
@@ -379,17 +412,16 @@ class _DosenDetailKelasPageState extends State<DosenDetailKelasPage> {
 
   // 🔹 STAT BOX
   Widget _statBox(String value, String label, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        children: [
-          Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-          Text(label, style: const TextStyle(fontSize: 12)),
-        ],
+    return GlassCard(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+        child: Column(
+          children: [
+            Text(value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF1E293B))),
+            const SizedBox(height: 4),
+            Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF64748B))),
+          ],
+        ),
       ),
     );
   }
@@ -399,158 +431,184 @@ class _DosenDetailKelasPageState extends State<DosenDetailKelasPage> {
     final status = m['status'] ?? 'Terjadwal';
     final isDone = status == 'Selesai';
     final isBerlangsung = status == 'Berlangsung';
-    final dateStr = m['tanggal'] ?? ''; // Format: YYYY-MM-DD
+    final dateStr = m['tanggal'] ?? ''; 
     
     DateTime? date;
     if (dateStr.isNotEmpty) {
       try {
         date = DateTime.parse(dateStr);
       } catch (e) {
-        // Abaikan
+        // Ignore parse error
       }
     }
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)
-        ],
-        border: isBerlangsung ? Border.all(color: Colors.blueAccent, width: 1.5) : null,
-      ),
-      child: Row(
-        children: [
+    Color statusColor = Colors.grey;
+    if (isDone) statusColor = const Color(0xFF10B981); // Emerald
+    if (isBerlangsung) statusColor = const Color(0xFF3B82F6); // Blue
 
-          // ICON
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              color: isDone 
-                ? Colors.green.withValues(alpha: 0.1) 
-                : (isBerlangsung ? Colors.blue.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.1)),
-              borderRadius: BorderRadius.circular(14),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14.0),
+      child: GlassCard(
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border(
+              left: BorderSide(color: statusColor, width: 4),
             ),
-            child: Icon(
-              isDone ? Icons.check_circle : (isBerlangsung ? Icons.play_circle_fill : Icons.access_time),
-              color: isDone ? Colors.green : (isBerlangsung ? Colors.blue : Colors.grey),
-            ),
+            borderRadius: BorderRadius.circular(8),
           ),
-
-          const SizedBox(width: 12),
-
-          // TEXT
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  m['topik'] ?? "Pertemuan ke-${m["pertemuan_ke"]}",
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  date != null ? _formatDate(date) : dateStr,
-                  style: const TextStyle(color: Colors.grey),
-                ),
-                if (isBerlangsung)
-                  const Text(
-                    "Sedang Berlangsung",
-                    style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 12),
-                  )
-              ],
-            ),
-          ),
-
-          // ACTION
-          if (isDone)
-            GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => DosenSesiPage(
-                      pertemuanId: m['id'],
-                      kelasId: widget.kelasId,
-                      namaMataKuliah: widget.namaMataKuliah,
-                      topikPertemuan: m['topik'] ?? "Pertemuan ke-${m["pertemuan_ke"]}",
-                      kodeKelas: widget.kodeKelas,
-                      semester: widget.semester,
-                      tahunAjaran: widget.tahunAjaran,
-                    ),
-                  ),
-                );
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              // ICON
+              Container(
+                width: 45,
+                height: 45,
                 decoration: BoxDecoration(
-                  color: Colors.green.withValues(alpha: 0.15),
+                  color: statusColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
                 ),
-                child: Row(
-                  children: const [
-                    Icon(Icons.remove_red_eye, color: Colors.green, size: 16),
-                    SizedBox(width: 6),
-                    Text("Lihat", style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
-                  ],
+                child: Icon(
+                  isDone ? Icons.check_circle_rounded : (isBerlangsung ? Icons.play_circle_fill_rounded : Icons.access_time_rounded),
+                  color: statusColor,
+                  size: 24,
                 ),
               ),
-            )
-          else
-            GestureDetector(
-              onTap: () {
-                if (isBerlangsung) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => DosenSesiPage(
-                        pertemuanId: m['id'],
-                        kelasId: widget.kelasId,
-                        namaMataKuliah: widget.namaMataKuliah,
-                        topikPertemuan: m['topik'] ?? "Pertemuan ke-${m["pertemuan_ke"]}",
-                        kodeKelas: widget.kodeKelas,
-                        semester: widget.semester,
-                        tahunAjaran: widget.tahunAjaran,
-                      ),
-                    ),
-                  ).then((val) {
-                    if (val == true) {
-                      _loadMeetings();
-                    }
-                  });
-                } else {
-                  _startMeetingAndNavigate(m);
-                }
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                decoration: BoxDecoration(
-                  gradient: isBerlangsung ? null : const LinearGradient(
-                    colors: [Color(0xFF7C3AED), Color(0xFF6366F1)],
-                  ),
-                  color: isBerlangsung ? Colors.blueAccent : null,
-                  borderRadius: const BorderRadius.all(Radius.circular(12)),
-                ),
-                child: Row(
+
+              const SizedBox(width: 16),
+
+              // TEXT
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(
-                      isBerlangsung ? Icons.door_front_door : Icons.qr_code, 
-                      color: Colors.white, 
-                      size: 16
-                    ),
-                    const SizedBox(width: 6),
                     Text(
-                      isBerlangsung ? "Masuk" : "Mulai", 
-                      style: const TextStyle(color: Colors.white)
+                      m['topik'] ?? "Pertemuan ke-${m["pertemuan_ke"]}",
+                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: Color(0xFF1E293B)),
                     ),
+                    const SizedBox(height: 4),
+                    Text(
+                      date != null ? _formatDate(date) : dateStr,
+                      style: const TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.w500, fontSize: 13),
+                    ),
+                    if (isBerlangsung)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6.0),
+                        child: Row(
+                          children: [
+                            Container(width: 6, height: 6, decoration: const BoxDecoration(color: Color(0xFF3B82F6), shape: BoxShape.circle)),
+                            const SizedBox(width: 6),
+                            Flexible(
+                              child: const Text(
+                                "Sedang Berlangsung",
+                                style: TextStyle(color: Color(0xFF3B82F6), fontWeight: FontWeight.w700, fontSize: 12),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
                   ],
                 ),
               ),
-            )
-        ],
+
+              const SizedBox(width: 12),
+
+              // ACTION
+              if (isDone)
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => DosenSesiPage(
+                          pertemuanId: m['id'],
+                          kelasId: widget.kelasId,
+                          namaMataKuliah: widget.namaMataKuliah,
+                          topikPertemuan: m['topik'] ?? "Pertemuan ke-${m["pertemuan_ke"]}",
+                          kodeKelas: widget.kodeKelas,
+                          semester: widget.semester,
+                          tahunAjaran: widget.tahunAjaran,
+                        ),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.2)),
+                    ),
+                    child: Row(
+                      children: const [
+                        Icon(Icons.remove_red_eye_rounded, color: Color(0xFF10B981), size: 16),
+                        SizedBox(width: 6),
+                        Text("Lihat", style: TextStyle(color: Color(0xFF10B981), fontWeight: FontWeight.w700, fontSize: 13)),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                GestureDetector(
+                  onTap: () {
+                    if (isBerlangsung) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => DosenSesiPage(
+                            pertemuanId: m['id'],
+                            kelasId: widget.kelasId,
+                            namaMataKuliah: widget.namaMataKuliah,
+                            topikPertemuan: m['topik'] ?? "Pertemuan ke-${m["pertemuan_ke"]}",
+                            kodeKelas: widget.kodeKelas,
+                            semester: widget.semester,
+                            tahunAjaran: widget.tahunAjaran,
+                          ),
+                        ),
+                      ).then((val) {
+                        if (val == true) {
+                          _loadMeetings();
+                        }
+                      });
+                    } else {
+                      _startMeetingAndNavigate(m);
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    decoration: BoxDecoration(
+                      gradient: isBerlangsung ? null : const LinearGradient(
+                        colors: [Color(0xFF7C3AED), Color(0xFF4F46E5)],
+                      ),
+                      color: isBerlangsung ? const Color(0xFF3B82F6) : null,
+                      borderRadius: const BorderRadius.all(Radius.circular(12)),
+                      boxShadow: isBerlangsung ? null : [
+                        BoxShadow(
+                          color: const Color(0xFF7C3AED).withValues(alpha: 0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        )
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          isBerlangsung ? Icons.meeting_room_rounded : Icons.play_arrow_rounded, 
+                          color: Colors.white, 
+                          size: 16
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          isBerlangsung ? "Masuk" : "Mulai", 
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13)
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+            ],
+          ),
+        ),
       ),
     );
   }

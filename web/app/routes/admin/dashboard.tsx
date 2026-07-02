@@ -17,7 +17,6 @@ import {
   GraduationCap, 
   Building2, 
   Calendar,
-  MoreVertical,
   ArrowUpRight,
   TrendingUp,
   Clock,

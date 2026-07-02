@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:mobile/mahasiswa/pages/dashboard_page.dart';
-import 'package:mobile/mahasiswa/pages/kelas_page.dart';
-import 'package:mobile/mahasiswa/pages/riwayat_page.dart';
-import 'package:mobile/mahasiswa/pages/profile_page.dart';
-import 'package:mobile/shared/mahasiswa_bottom_nav.dart';
+import 'package:siam_mobile/mahasiswa/pages/dashboard_page.dart';
+import 'package:siam_mobile/mahasiswa/pages/kelas_page.dart';
+import 'package:siam_mobile/mahasiswa/pages/riwayat_page.dart';
+import 'package:siam_mobile/mahasiswa/pages/profile_page.dart';
+import 'package:siam_mobile/shared/mahasiswa_bottom_nav.dart';
 
 class MahasiswaMain extends StatefulWidget {
   const MahasiswaMain({super.key});

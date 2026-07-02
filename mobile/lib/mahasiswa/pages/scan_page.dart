@@ -4,7 +4,7 @@ import 'package:flutter/services.dart'; // Added for HapticFeedback
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:mobile/mahasiswa/services/mahasiswa_service.dart';
+import 'package:siam_mobile/mahasiswa/services/mahasiswa_service.dart';
 
 class ScanPage extends StatefulWidget {
   const ScanPage({super.key});

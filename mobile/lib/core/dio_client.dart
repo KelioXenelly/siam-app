@@ -1,9 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:mobile/core/api_constants.dart';
-import 'package:mobile/core/storage_service.dart';
-import 'package:mobile/main.dart';
+import 'package:siam_mobile/core/api_constants.dart';
+import 'package:siam_mobile/core/storage_service.dart';
+import 'package:siam_mobile/main.dart';
 
 class DioClient {
   static final Dio dio = Dio(

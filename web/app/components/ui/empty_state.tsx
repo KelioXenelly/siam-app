@@ -1,5 +1,4 @@
-import React from 'react';
-import { SearchX, FolderOpen } from 'lucide-react';
+import { SearchX } from 'lucide-react';
 
 interface EmptyStateProps {
   icon?: React.ElementType;

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:mobile/shared/shimmer_loading.dart';
-import 'package:mobile/mahasiswa/services/mahasiswa_service.dart';
-import 'package:mobile/shared/glass_card.dart';
+import 'package:siam_mobile/shared/shimmer_loading.dart';
+import 'package:siam_mobile/mahasiswa/services/mahasiswa_service.dart';
+import 'package:siam_mobile/shared/glass_card.dart';
 import 'package:intl/intl.dart';
 
 class RiwayatPage extends StatefulWidget {
@@ -59,30 +59,65 @@ class _RiwayatPageState extends State<RiwayatPage> {
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
-            // 🔵 HEADER GRADIENT SIVER
+          // 🔵 HEADER DENGAN DEEP GLASSMORPHISM
           SliverAppBar(
-            expandedHeight: 140,
+            expandedHeight: 160,
             floating: false,
             pinned: true,
             automaticallyImplyLeading: false,
             backgroundColor: const Color(0xFF2563EB),
             flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFF2563EB), Color(0xFF4F46E5)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+              background: Stack(
+                children: [
+                  Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Color(0xFF2563EB), Color(0xFF4F46E5), Color(0xFF312E81)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                    ),
                   ),
-                ),
+                  Positioned(
+                    top: -40,
+                    right: -40,
+                    child: Container(
+                      width: 150,
+                      height: 150,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withValues(alpha: 0.1),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: -50,
+                    left: -20,
+                    child: Container(
+                      width: 120,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withValues(alpha: 0.08),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              titlePadding: const EdgeInsets.only(left: 20, bottom: 16),
-              title: const Text(
-                "Riwayat Lengkap",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
+              titlePadding: const EdgeInsets.only(left: 24, bottom: 20),
+              title: Row(
+                children: const [
+                  Icon(Icons.history_rounded, color: Colors.white, size: 28),
+                  SizedBox(width: 12),
+                  Text(
+                    "Riwayat Lengkap",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
               ),
             ),
             shape: const RoundedRectangleBorder(
@@ -97,10 +132,10 @@ class _RiwayatPageState extends State<RiwayatPage> {
           if (!_isLoading && _riwayat.isNotEmpty)
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
                 child: GlassCard(
                   child: Padding(
-                    padding: const EdgeInsets.all(12.0),
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
@@ -126,7 +161,7 @@ class _RiwayatPageState extends State<RiwayatPage> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(
-                                Icons.calendar_today_rounded,
+                                Icons.event_busy_rounded,
                                 size: 80,
                                 color: Colors.grey.withValues(alpha: 0.3),
                               ),
@@ -167,10 +202,12 @@ class _RiwayatPageState extends State<RiwayatPage> {
                             
                             final rawDate = r['waktu_absen'] ?? r['created_at'];
                             String formattedDate = "-";
+                            String formattedTime = "-";
                             if (rawDate != null) {
                               try {
                                 final dt = DateTime.parse(rawDate).toLocal();
-                                formattedDate = DateFormat('dd MMM yyyy, HH:mm').format(dt);
+                                formattedDate = DateFormat('dd MMM yyyy').format(dt);
+                                formattedTime = DateFormat('HH:mm').format(dt);
                               } catch (_) {}
                             }
 
@@ -178,7 +215,8 @@ class _RiwayatPageState extends State<RiwayatPage> {
                               namaMk: namaMk,
                               topik: topik,
                               status: status,
-                              waktuAbsen: formattedDate,
+                              tanggal: formattedDate,
+                              waktu: formattedTime,
                             );
                           }).toList(),
                         ),
@@ -196,63 +234,71 @@ class _RiwayatPageState extends State<RiwayatPage> {
     required String namaMk,
     required String topik,
     required String status,
-    required String waktuAbsen,
+    required String tanggal,
+    required String waktu,
   }) {
     Color statusColor;
     IconData statusIcon;
 
     switch (status.toLowerCase()) {
       case 'hadir':
-        statusColor = Colors.green;
-        statusIcon = Icons.check_circle;
+        statusColor = const Color(0xFF10B981); // Emerald
+        statusIcon = Icons.check_circle_rounded;
         break;
       case 'terlambat':
-        statusColor = Colors.orange;
-        statusIcon = Icons.access_time_filled;
+        statusColor = const Color(0xFFF59E0B); // Amber
+        statusIcon = Icons.timer_rounded;
         break;
       case 'alfa':
-        statusColor = Colors.red;
-        statusIcon = Icons.cancel;
+        statusColor = const Color(0xFFEF4444); // Red
+        statusIcon = Icons.cancel_rounded;
         break;
       case 'izin':
       case 'sakit':
-        statusColor = Colors.blue;
-        statusIcon = Icons.info;
+        statusColor = const Color(0xFF3B82F6); // Blue
+        statusIcon = Icons.info_rounded;
         break;
       default:
         statusColor = Colors.grey;
-        statusIcon = Icons.help;
+        statusIcon = Icons.help_rounded;
     }
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: GlassCard(
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border(
+              left: BorderSide(color: statusColor, width: 4),
+            ),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          padding: const EdgeInsets.fromLTRB(12, 4, 4, 4),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // HEADER (Topik & Status)
+              // HEADER (Mata Kuliah & Status)
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
                     child: Text(
-                      topik,
+                      namaMk,
                       style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF1E293B), // Slate 800
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
                       color: statusColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: statusColor.withValues(alpha: 0.3)),
+                      border: Border.all(color: statusColor.withValues(alpha: 0.2)),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -263,7 +309,7 @@ class _RiwayatPageState extends State<RiwayatPage> {
                           status,
                           style: TextStyle(
                             color: statusColor,
-                            fontWeight: FontWeight.bold,
+                            fontWeight: FontWeight.w800,
                             fontSize: 12,
                           ),
                         ),
@@ -274,34 +320,49 @@ class _RiwayatPageState extends State<RiwayatPage> {
               ),
               const SizedBox(height: 12),
               
-              // NAMA MATKUL
+              // NAMA TOPIK
               Row(
                 children: [
-                  const Icon(Icons.book, size: 18, color: Color(0xFF2563EB)),
+                  const Icon(Icons.bookmark_rounded, size: 16, color: Color(0xFF3B82F6)),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      namaMk,
+                      topik,
                       style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF475569), // Slate 600
+                        fontSize: 14,
                       ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
               
-              // TIMESTAMP
-              Row(
-                children: [
-                  const Icon(Icons.calendar_today, size: 14, color: Colors.grey),
-                  const SizedBox(width: 8),
-                  Text(
-                    waktuAbsen,
-                    style: const TextStyle(color: Colors.grey, fontSize: 13),
-                  ),
-                ],
+              // TIMESTAMP (Tanggal & Waktu)
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.calendar_today_rounded, size: 14, color: Colors.grey),
+                    const SizedBox(width: 6),
+                    Text(
+                      tanggal,
+                      style: const TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(width: 16),
+                    const Icon(Icons.access_time_rounded, size: 14, color: Colors.grey),
+                    const SizedBox(width: 6),
+                    Text(
+                      waktu,
+                      style: const TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.w600),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),

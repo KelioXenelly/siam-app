@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
-import 'package:mobile/core/dio_client.dart';
-import 'package:mobile/core/dio_exception_handler.dart';
+import 'package:siam_mobile/core/dio_client.dart';
+import 'package:siam_mobile/core/dio_exception_handler.dart';
 
 class MahasiswaService {
   final Dio _dio = DioClient.dio;

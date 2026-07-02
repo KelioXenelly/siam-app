@@ -1,87 +1,41 @@
-# Welcome to React Router!
+# SIAM Admin Dashboard 💻
 
-A modern, production-ready template for building full-stack React applications using React Router.
+Bagian ini adalah **Sistem Manajemen (Web Admin)** dari ekosistem SIAM. 
+Dashboard ini digunakan oleh pihak kampus (Admin) untuk mengelola data master akademik, mulai dari pengguna (mahasiswa & dosen), mata kuliah, jadwal kelas, hingga memantau statistik aktivitas sistem.
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/remix-run/react-router-templates/tree/main/default)
+## 🛠️ Teknologi yang Digunakan
+Aplikasi web ini dibangun menggunakan teknologi *frontend* modern:
+- **Framework:** React Router 7 (berjalan di atas Vite)
+- **Styling:** Tailwind CSS v4
+- **Data Fetching:** SWR & Axios
+- **Iconography:** Lucide React
+- **Komponen UI:** Motion (Framer Motion) untuk animasi mulus.
 
-## Features
+## 🚀 Panduan Memulai (Development)
 
-- 🚀 Server-side rendering
-- ⚡️ Hot Module Replacement (HMR)
-- 📦 Asset bundling and optimization
-- 🔄 Data loading and mutations
-- 🔒 TypeScript by default
-- 🎉 TailwindCSS for styling
-- 📖 [React Router docs](https://reactrouter.com/)
+1. **Instalasi Dependensi**
+   Pastikan Anda sudah menginstal Node.js versi terbaru. Buka terminal di folder `web` dan jalankan:
+   ```bash
+   npm install
+   ```
 
-## Getting Started
+2. **Konfigurasi Environment**
+   Salin file `.env.example` menjadi `.env`.
+   ```bash
+   cp .env.example .env
+   ```
+   Pastikan `VITE_API_URL` mengarah ke backend Laravel lokal Anda (secara bawaan: `http://localhost:8000/api`).
 
-### Installation
+3. **Menjalankan Server Pengembangan**
+   Jalankan perintah berikut untuk menyalakan Vite *development server*:
+   ```bash
+   npm run dev
+   ```
+   Aplikasi dapat diakses melalui browser di `http://localhost:5173`.
 
-Install the dependencies:
-
-```bash
-npm install
-```
-
-### Development
-
-Start the development server with HMR:
-
-```bash
-npm run dev
-```
-
-Your application will be available at `http://localhost:5173`.
-
-## Building for Production
-
-Create a production build:
-
+## 📦 Build untuk Produksi
+Jika Anda ingin men-*deploy* aplikasi ini ke server produksi (misal: Vercel, VPS, atau Netlify), jalankan perintah:
 ```bash
 npm run build
 ```
-
-## Deployment
-
-### Docker Deployment
-
-To build and run using Docker:
-
-```bash
-docker build -t my-app .
-
-# Run the container
-docker run -p 3000:3000 my-app
-```
-
-The containerized application can be deployed to any platform that supports Docker, including:
-
-- AWS ECS
-- Google Cloud Run
-- Azure Container Apps
-- Digital Ocean App Platform
-- Fly.io
-- Railway
-
-### DIY Deployment
-
-If you're familiar with deploying Node applications, the built-in app server is production-ready.
-
-Make sure to deploy the output of `npm run build`
-
-```
-├── package.json
-├── package-lock.json (or pnpm-lock.yaml, or bun.lockb)
-├── build/
-│   ├── client/    # Static assets
-│   └── server/    # Server-side code
-```
-
-## Styling
-
-This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever CSS framework you prefer.
-
----
-
-Built with ❤️ using React Router.
+Hasil *build* statis akan berada di dalam folder `build/client/`.
