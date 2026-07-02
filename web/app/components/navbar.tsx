@@ -1,4 +1,4 @@
-import { Search, Bell, ChevronDown, LogOut, Menu } from "lucide-react";
+import { ChevronDown, LogOut, Menu } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router";

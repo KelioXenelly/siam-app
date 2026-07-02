@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 
 export function meta() {
@@ -10,7 +10,6 @@ export function meta() {
 import {
   Plus,
   Search,
-  MoreVertical,
   Edit,
   Trash2,
   Eye,

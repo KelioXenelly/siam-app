@@ -497,7 +497,13 @@ class _DosenDetailKelasPageState extends State<DosenDetailKelasPage> {
                           children: [
                             Container(width: 6, height: 6, decoration: const BoxDecoration(color: Color(0xFF3B82F6), shape: BoxShape.circle)),
                             const SizedBox(width: 6),
-                            const Text("Sedang Berlangsung", style: TextStyle(color: Color(0xFF3B82F6), fontWeight: FontWeight.w700, fontSize: 12)),
+                            Flexible(
+                              child: const Text(
+                                "Sedang Berlangsung",
+                                style: TextStyle(color: Color(0xFF3B82F6), fontWeight: FontWeight.w700, fontSize: 12),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
                           ],
                         ),
                       )

@@ -1,4 +1,4 @@
-package com.example.mobile
+package com.kelioxenelly.siam
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -1,5 +1,3 @@
-import React from 'react';
-
 interface SkeletonTableProps {
   columns: number;
   rows?: number;

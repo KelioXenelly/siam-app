@@ -89,9 +89,7 @@ class _ProgressPainter extends CustomPainter {
 
     final sweepAngle = 2 * pi * (progress / 100);
 
-    // ✨ GLOW EFFECT (Shadow under the stroke)
-    final path = Path()..addArc(rect, -pi / 2, sweepAngle);
-    canvas.drawShadow(path, const Color(0xFF2563EB).withValues(alpha: 0.5), 10, false);
+    // Removed drawShadow because it causes the inside of the ring to be filled with a grayish color
 
     canvas.drawArc(
       rect,
