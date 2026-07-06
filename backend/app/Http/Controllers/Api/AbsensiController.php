@@ -107,7 +107,7 @@ class AbsensiController extends Controller
         $mahasiswa = $user->mahasiswa;
 
         // 1. cek sesi (validasi token)
-        $sesi = SesiAbsensi::with('pertemuan.kelas')->where('qr_token', $validated['token'])->first();
+        $sesi = SesiAbsensi::with('pertemuan.kelas')->where((string) 'qr_token', $validated['token'])->first();
 
         if (!$sesi) {
             return response()->json([
@@ -135,7 +135,7 @@ class AbsensiController extends Controller
         $kelas = $sesi->pertemuan->kelas;
 
         $terdaftar = $kelas->mahasiswas()
-            ->where('mahasiswa_id', $mahasiswa->id)
+            ->where((string) 'mahasiswa_id', $mahasiswa->id)
             ->exists();
 
         if (!$terdaftar) {
@@ -147,8 +147,8 @@ class AbsensiController extends Controller
 
         return DB::transaction(function () use ($request, $sesi, $mahasiswa, $validated) {
             // 4. cek sudah absen?
-            $already = Absensi::where('sesi_absensi_id', $sesi->id)
-                ->where('mahasiswa_id', $mahasiswa->id)
+            $already = Absensi::where((string) 'sesi_absensi_id', $sesi->id)
+                ->where((string) 'mahasiswa_id', $mahasiswa->id)
                 ->lockForUpdate()
                 ->first();
 
@@ -188,8 +188,8 @@ class AbsensiController extends Controller
             // 7. upload selfie
             if ($request->hasFile('selfie_photo')) {
                 $file = $request->file('selfie_photo');
-                $absensiTemp = new Absensi();
-                $path = $absensiTemp->uploadToCloudinary($file, 'siam/selfies');
+                // Simpan ke storage/app/public/siam/selfies
+                $path = $file->store('siam/selfies', 'public');
             } else {
                 throw new \Exception('Selfie wajib diupload');
             }
@@ -275,7 +275,7 @@ class AbsensiController extends Controller
         }
 
         $absensi = Absensi::with(['sesiAbsensi.pertemuan.kelas.mataKuliah'])
-            ->where('mahasiswa_id', $mahasiswa->id)
+            ->where((string) 'mahasiswa_id', $mahasiswa->id)
             ->latest()
             ->get();
 
@@ -339,7 +339,7 @@ class AbsensiController extends Controller
     public function bySesi($sesi_id)
     {
         $absensi = Absensi::with('mahasiswa.user')
-            ->where('sesi_absensi_id', $sesi_id)
+            ->where((string) 'sesi_absensi_id', $sesi_id)
             ->get();
 
         if ($absensi->isEmpty()) {
@@ -478,7 +478,7 @@ class AbsensiController extends Controller
     )]
     public function byPertemuanForAdmin($pertemuan_id)
     {
-        $sesi = SesiAbsensi::where('pertemuan_id', $pertemuan_id)->first();
+        $sesi = SesiAbsensi::where((string) 'pertemuan_id', $pertemuan_id)->first();
 
         if (!$sesi) {
             return response()->json([
@@ -488,7 +488,7 @@ class AbsensiController extends Controller
         }
 
         $absensi = Absensi::with('mahasiswa.user')
-            ->where('sesi_absensi_id', $sesi->id)
+            ->where((string) 'sesi_absensi_id', $sesi->id)
             ->get();
 
         return response()->json([

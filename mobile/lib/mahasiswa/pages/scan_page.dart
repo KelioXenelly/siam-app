@@ -149,11 +149,8 @@ class _ScanPageState extends State<ScanPage> with SingleTickerProviderStateMixin
         'lng': position.longitude,
       };
     } catch (e) {
-      debugPrint("GPS Retrieval failed: $e. Using default Mock coordinates.");
-      return {
-        'lat': -6.229728,
-        'lng': 106.829498,
-      };
+      debugPrint("GPS Retrieval failed: $e");
+      throw Exception('Gagal mendapatkan lokasi GPS. Pastikan izin lokasi aktif dan GPS menyala.');
     }
   }
 

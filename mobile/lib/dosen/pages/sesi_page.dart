@@ -423,7 +423,11 @@ class _DosenSesiPageState extends State<DosenSesiPage> {
       backgroundColor: const Color(0xFFF8FAFC),
       body: Stack(
         children: [
-          SingleChildScrollView(
+          RefreshIndicator(
+            onRefresh: _initSessionFlow,
+            color: const Color(0xFF7C3AED),
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
             child: Column(
               children: [
                 
@@ -604,6 +608,7 @@ class _DosenSesiPageState extends State<DosenSesiPage> {
                 const SizedBox(height: 120), // Bottom navigation clearance
               ],
             ),
+          ),
           ),
 
           // ❄️ GLASS ACTION FOOTER
@@ -922,9 +927,15 @@ class _DosenSesiPageState extends State<DosenSesiPage> {
             ? rawStatus[0].toUpperCase() + rawStatus.substring(1).toLowerCase() 
             : 'Alfa';
         
-        final checkInTime = item['waktu_scan'] != null
-          ? item['waktu_scan'].toString().substring(0, 5) // HH:mm
-          : '--:--';
+        String checkInTime = '--:--';
+        if (item['waktu_absen'] != null) {
+          try {
+            final dt = DateTime.parse(item['waktu_absen'].toString()).toLocal();
+            checkInTime = "${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
+          } catch (_) {
+            checkInTime = '--:--';
+          }
+        }
 
         final selfiePath = item['selfie_photo']?.toString();
         final selfieUrl = selfiePath != null && selfiePath.isNotEmpty

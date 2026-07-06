@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:siam_mobile/auth/services/auth_service.dart';
+import 'package:provider/provider.dart';
+import 'package:siam_mobile/auth/providers/user_provider.dart';
 import 'package:siam_mobile/shared/glass_card.dart';
 
 class LoginPage extends StatefulWidget {
@@ -96,8 +98,10 @@ class _LoginPageState extends State<LoginPage> {
       }
 
       if (user.role == 'mahasiswa') {
+        context.read<UserProvider>().setUser(user);
         Navigator.pushReplacementNamed(context, '/dashboard');
       } else if (user.role == 'dosen') {
+        context.read<UserProvider>().setUser(user);
         Navigator.pushReplacementNamed(context, '/dosen/dashboard');
       }
     } catch (e) {

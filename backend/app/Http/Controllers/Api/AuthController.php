@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use App\Models\User;
 use App\Models\Mahasiswa;
 use App\Models\Dosen;
@@ -69,12 +70,12 @@ class AuthController extends Controller
             'password' => 'required'
         ]);
 
-        $user = User::where('email', $request->identifier)
+        $user = User::where((string) 'email', $request->identifier)
             ->orWhereHas('mahasiswa', function ($q) use ($request) {
-                $q->where('nim', $request->identifier);
+                $q->where((string) 'nim', $request->identifier);
             })
             ->orWhereHas('dosen', function ($q) use ($request) {
-                $q->where('nidn', $request->identifier);
+                $q->where((string) 'nidn', $request->identifier);
             })
             ->first();
 
@@ -91,6 +92,8 @@ class AuthController extends Controller
         }
 
         $token = $user->createToken('siam_token')->plainTextToken;
+
+        $user->load(['mahasiswa.prodi', 'dosen']);
 
         return response()->json([
             'message' => "Login berhasil! Selamat datang " . $user->name . " 👋",
@@ -528,16 +531,16 @@ class AuthController extends Controller
 
         if ($search) {
             $query->where(function($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('role', 'like', "%{$search}%");
+                $q->where((string) 'name', 'like', "%{$search}%")
+                  ->orWhere((string) 'email', 'like', "%{$search}%")
+                  ->orWhere((string) 'role', 'like', "%{$search}%");
             });
         }
 
         if ($sortKey) {
             $query->orderBy($sortKey, $sortDir);
         } else {
-            $query->orderBy('name', 'asc');
+            $query->orderBy((string) 'name', 'asc');
         }
 
         $data = $query->paginate($perPage);
@@ -1027,8 +1030,14 @@ class AuthController extends Controller
         $user = $request->user();
 
         if ($request->hasFile('avatar')) {
+            // Hapus avatar lama jika ada
+            if ($user->avatar && Storage::disk('public')->exists($user->avatar)) {
+                Storage::disk('public')->delete($user->avatar);
+            }
+
             $file = $request->file('avatar');
-            $user->avatar = $user->uploadToCloudinary($file, 'siam/avatars');
+            // Simpan ke storage/app/public/siam/avatars
+            $user->avatar = $file->store('siam/avatars', 'public');
             $user->save();
 
             // Memuat relasi agar kembalian user lengkap
@@ -1057,8 +1066,14 @@ class AuthController extends Controller
         ]);
 
         if ($request->hasFile('avatar')) {
+            // Hapus avatar lama jika ada
+            if ($user->avatar && Storage::disk('public')->exists($user->avatar)) {
+                Storage::disk('public')->delete($user->avatar);
+            }
+
             $file = $request->file('avatar');
-            $user->avatar = $user->uploadToCloudinary($file, 'siam/avatars');
+            // Simpan ke storage/app/public/siam/avatars
+            $user->avatar = $file->store('siam/avatars', 'public');
             $user->save();
 
             // Memuat relasi

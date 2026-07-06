@@ -105,19 +105,12 @@ class _RiwayatPageState extends State<RiwayatPage> {
                 ],
               ),
               titlePadding: const EdgeInsets.only(left: 24, bottom: 20),
-              title: Row(
-                children: const [
-                  Icon(Icons.history_rounded, color: Colors.white, size: 28),
-                  SizedBox(width: 12),
-                  Text(
-                    "Riwayat Lengkap",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ],
+              title: const Text(
+                "Riwayat Lengkap",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ),
             shape: const RoundedRectangleBorder(

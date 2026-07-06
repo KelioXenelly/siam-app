@@ -2,8 +2,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:siam_mobile/core/api_constants.dart';
-import 'package:siam_mobile/auth/models/user_model.dart';
 import 'package:siam_mobile/auth/services/auth_service.dart';
+import 'package:provider/provider.dart';
+import 'package:siam_mobile/auth/providers/user_provider.dart';
 import 'package:siam_mobile/shared/glass_card.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -16,27 +17,22 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   final AuthService _authService = AuthService();
   
-  User? _user;
-  bool _isLoading = true;
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _loadUserData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        if (context.read<UserProvider>().user == null) {
+          context.read<UserProvider>().fetchUser();
+        }
+      }
+    });
   }
 
   Future<void> _loadUserData() async {
-    try {
-      final user = await _authService.getMe();
-      if (mounted) {
-        setState(() {
-          _user = user;
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) setState(() => _isLoading = false);
-    }
+    await context.read<UserProvider>().fetchUser();
   }
 
   Future<void> _uploadAvatar() async {
@@ -48,8 +44,8 @@ class _ProfilePageState extends State<ProfilePage> {
       try {
         final updatedUser = await _authService.uploadAvatar(File(image.path));
         if (mounted) {
+          context.read<UserProvider>().setUser(updatedUser);
           setState(() {
-            _user = updatedUser;
             _isLoading = false;
           });
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Foto profil berhasil diperbarui!')));
@@ -65,10 +61,17 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    final userProvider = context.watch<UserProvider>();
+    final user = userProvider.user;
+    
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      body: SingleChildScrollView(
-        child: Column(
+      body: RefreshIndicator(
+        onRefresh: _loadUserData,
+        color: const Color(0xFF2563EB),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
           children: [
 
             /// 🔵 HEADER DENGAN DEEP GLASSMORPHISM
@@ -124,16 +127,16 @@ class _ProfilePageState extends State<ProfilePage> {
                                     spreadRadius: 5,
                                   )
                                 ],
-                                image: (_user?.avatar != null)
-                                    ? DecorationImage(
-                                        image: NetworkImage(ApiConstants.baseUrl.replaceAll('/api', '') + _user!.avatar!),
-                                        fit: BoxFit.cover,
-                                      )
+                            image: (user?.avatar != null)
+                                ? DecorationImage(
+                                    image: NetworkImage(user!.avatar!.startsWith('http') ? user.avatar! : '${ApiConstants.baseUrl.replaceAll('/api', '/storage')}${user.avatar!.startsWith('/') ? '' : '/'}${user.avatar}'),
+                                    fit: BoxFit.cover,
+                                  )
                                     : null,
                               ),
-                              child: (_user?.avatar == null)
+                              child: (user?.avatar == null)
                                   ? Text(
-                                      _getInitials(_user?.name ?? ""),
+                                      _getInitials(user?.name ?? ""),
                                       style: const TextStyle(
                                         fontSize: 36,
                                         fontWeight: FontWeight.w800,
@@ -161,7 +164,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         Column(
                           children: [
                             Text(
-                              _user?.name ?? "Nama Tidak Diketahui",
+                              user?.name ?? "Nama Tidak Diketahui",
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 24,
@@ -170,7 +173,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              _user?.email ?? "-",
+                              user?.email ?? "-",
                               style: TextStyle(
                                 color: Colors.white.withValues(alpha: 0.8),
                                 fontSize: 14,
@@ -186,7 +189,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
                               ),
                               child: Text(
-                                "NIM: ${_user?.identifier ?? '-'}",
+                                "NIM: ${user?.identifier ?? '-'}",
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w700,
@@ -255,15 +258,15 @@ class _ProfilePageState extends State<ProfilePage> {
                     GlassCard(
                       child: Column(
                         children: [
-                          _buildItem(Icons.person_rounded, "Nama Lengkap", _user?.name ?? "-", Colors.blue),
+                          _buildItem(Icons.person_rounded, "Nama Lengkap", user?.name ?? "-", Colors.blue),
                           _divider(),
-                          _buildItem(Icons.email_rounded, "Email", _user?.email ?? "-", Colors.orange),
+                          _buildItem(Icons.email_rounded, "Email", user?.email ?? "-", Colors.orange),
                           _divider(),
-                          _buildItem(Icons.badge_rounded, "NIM", _user?.identifier ?? "-", Colors.purple),
+                          _buildItem(Icons.badge_rounded, "NIM", user?.identifier ?? "-", Colors.purple),
                           _divider(),
-                          _buildItem(Icons.school_rounded, "Program Studi", _user?.prodiName ?? "-", Colors.green),
+                          _buildItem(Icons.school_rounded, "Program Studi", user?.prodiName ?? "-", Colors.green),
                           _divider(),
-                          _buildItem(Icons.stars_rounded, "Role", _user?.role ?? "-", Colors.teal),
+                          _buildItem(Icons.stars_rounded, "Role", user?.role ?? "-", Colors.teal),
                         ],
                       ),
                     ),
@@ -323,15 +326,24 @@ class _ProfilePageState extends State<ProfilePage> {
                   /// 🔴 LOGOUT
                   GestureDetector(
                     onTap: () async {
-                      await _authService.logout();
-
-                      if (!context.mounted) return;
-
-                      Navigator.pushNamedAndRemoveUntil(
-                        context,
-                        '/login',
-                        (route) => false,
+                      // Tampilkan Loading
+                      showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (context) => const Center(child: CircularProgressIndicator()),
                       );
+
+                      try {
+                        await _authService.logout();
+                      } finally {
+                        if (context.mounted) {
+                          Navigator.pushNamedAndRemoveUntil(
+                            context,
+                            '/login',
+                            (route) => false,
+                          );
+                        }
+                      }
                     },
                     child: Container(
                       width: double.infinity,
@@ -376,6 +388,7 @@ class _ProfilePageState extends State<ProfilePage> {
             )
           ],
         ),
+      ),
       ),
     );
   }

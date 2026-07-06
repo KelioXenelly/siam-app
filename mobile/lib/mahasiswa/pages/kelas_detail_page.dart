@@ -64,9 +64,13 @@ class _KelasDetailPageState extends State<KelasDetailPage> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      body: CustomScrollView(
-        slivers: [
-          // 🔵 HEADER
+      body: RefreshIndicator(
+        onRefresh: _loadRiwayat,
+        color: const Color(0xFF2563EB),
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            // 🔵 HEADER
           SliverAppBar(
             expandedHeight: 200,
             floating: false,
@@ -139,13 +143,18 @@ class _KelasDetailPageState extends State<KelasDetailPage> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                "$kodeMk • $kodeKelas",
-                                style: const TextStyle(
-                                  color: Color(0xFF2563EB),
-                                  fontWeight: FontWeight.bold,
+                              Expanded(
+                                child: Text(
+                                  "$kodeMk • $kodeKelas",
+                                  style: const TextStyle(
+                                    color: Color(0xFF2563EB),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
+                              const SizedBox(width: 8),
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                 decoration: BoxDecoration(
@@ -336,6 +345,7 @@ class _KelasDetailPageState extends State<KelasDetailPage> {
           ),
           const SliverPadding(padding: EdgeInsets.only(bottom: 40)),
         ],
+      ),
       ),
     );
   }
