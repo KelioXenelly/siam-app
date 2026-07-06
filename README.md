@@ -37,6 +37,7 @@ composer install
 cp .env.example .env
 php artisan key:generate
 php artisan migrate --seed  # Membuat tabel dan mengisi data dummy
+php artisan storage:link # Membuat symlink untuk file public
 php artisan serve --host=0.0.0.0 --port=8000
 ```
 > **Catatan:** Backend akan berjalan di `http://localhost:8000`.

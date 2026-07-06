@@ -3,13 +3,9 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\HasCloudinaryImage;
 
 class Absensi extends Model
 {
-    use HasCloudinaryImage;
-
-    public $cloudinaryField = 'selfie_photo';
 
     protected $table = 'absensis';
     

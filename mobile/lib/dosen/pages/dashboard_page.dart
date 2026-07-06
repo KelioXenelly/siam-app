@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:siam_mobile/auth/models/user_model.dart';
-import 'package:siam_mobile/auth/services/auth_service.dart';
+import 'package:provider/provider.dart';
+import 'package:siam_mobile/auth/providers/user_provider.dart';
 import 'package:siam_mobile/dosen/services/dosen_service.dart';
 import 'package:siam_mobile/shared/shimmer_loading.dart';
 import 'package:siam_mobile/shared/glass_card.dart';
+import 'package:siam_mobile/core/api_constants.dart';
+import 'package:siam_mobile/dosen/pages/kelas_detail_page.dart';
 
 class DosenDashboardPage extends StatefulWidget {
   final Function(int)? onTabChange;
@@ -14,10 +16,8 @@ class DosenDashboardPage extends StatefulWidget {
 }
 
 class _DosenDashboardPageState extends State<DosenDashboardPage> {
-  final AuthService _authService = AuthService();
   final DosenService _dosenService = DosenService();
   
-  User? _user;
   bool _isLoading = true;
   List<dynamic> _courses = [];
   int _activeSessions = 0;
@@ -25,20 +25,20 @@ class _DosenDashboardPageState extends State<DosenDashboardPage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        if (context.read<UserProvider>().user == null) {
+          context.read<UserProvider>().fetchUser();
+        }
+      }
+    });
     _loadUserData();
   }
 
   Future<void> _loadUserData() async {
     setState(() => _isLoading = true);
     try {
-      // Run both API calls concurrently for faster loading
-      final responses = await Future.wait([
-        _authService.getMe(),
-        _dosenService.getKelasSaya(),
-      ]);
-      
-      final user = responses[0] as User;
-      final courses = responses[1] as List<dynamic>;
+      final courses = await _dosenService.getKelasSaya();
       
       // Calculate active sessions
       int active = 0;
@@ -51,7 +51,6 @@ class _DosenDashboardPageState extends State<DosenDashboardPage> {
 
       if (mounted) {
         setState(() {
-          _user = user;
           _courses = courses;
           _activeSessions = active;
           _isLoading = false;
@@ -71,6 +70,9 @@ class _DosenDashboardPageState extends State<DosenDashboardPage> {
 
   @override
   Widget build(BuildContext context) {
+    final userProvider = context.watch<UserProvider>();
+    final user = userProvider.user;
+    
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: RefreshIndicator(
@@ -114,13 +116,15 @@ class _DosenDashboardPageState extends State<DosenDashboardPage> {
                                   decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(8))
                                 )
                               : Text(
-                                  _user?.name ?? "Dosen",
+                                  user?.name ?? "Dosen",
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 24,
                                     fontWeight: FontWeight.w800,
                                     letterSpacing: -0.5,
                                   ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                             const SizedBox(height: 4),
                             _isLoading
@@ -137,8 +141,10 @@ class _DosenDashboardPageState extends State<DosenDashboardPage> {
                                     border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
                                   ),
                                   child: Text(
-                                    "NIDN: ${_user?.identifier ?? '-'}",
+                                    "NIDN: ${user?.identifier ?? '-'}",
                                     style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                           ],
@@ -158,15 +164,23 @@ class _DosenDashboardPageState extends State<DosenDashboardPage> {
                               spreadRadius: 2,
                             )
                           ],
+                          image: (user?.avatar != null)
+                              ? DecorationImage(
+                                  image: NetworkImage(user!.avatar!.startsWith('http') ? user.avatar! : '${ApiConstants.baseUrl.replaceAll('/api', '/storage')}${user.avatar!.startsWith('/') ? '' : '/'}${user.avatar}'),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
                         ),
-                        child: Text(
-                          _user != null ? _getInitials(_user!.name) : "D",
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                          ),
-                        ),
+                        child: (user?.avatar == null)
+                            ? Text(
+                                user != null ? _getInitials(user.name) : "D",
+                                style: const TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : null,
                       ),
                     ],
                   ),
@@ -217,7 +231,7 @@ class _DosenDashboardPageState extends State<DosenDashboardPage> {
                     title: "Mulai Absensi",
                     subtitle: "Buka sesi absensi dari daftar kelas",
                     color: const Color(0xFF8B5CF6),
-                    onTap: () => widget.onTabChange != null ? widget.onTabChange!(1) : Navigator.pushNamed(context, '/dosen/kelas'), // Route to Kelas Page
+                    onTap: () => _showQuickAbsensiModal(context),
                   ),
 
                   _menuCard(
@@ -344,6 +358,126 @@ class _DosenDashboardPageState extends State<DosenDashboardPage> {
             Text(value, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: Color(0xFF1E293B))),
             const SizedBox(height: 2),
             Text(title, style: TextStyle(color: Colors.blueGrey[400], fontSize: 12, fontWeight: FontWeight.w600)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showQuickAbsensiModal(BuildContext context) {
+    if (_courses.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Anda belum memiliki kelas.')));
+      return;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.6,
+        decoration: const BoxDecoration(
+          color: Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 20),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+            const Text(
+              "Pilih Kelas",
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              "Pilih kelas untuk mengelola sesi absensi saat ini.",
+              style: TextStyle(color: Colors.grey, fontSize: 14),
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: ListView.builder(
+                itemCount: _courses.length,
+                itemBuilder: (context, index) {
+                  final course = _courses[index];
+                  final namaMk = course['mata_kuliah']?['nama_mk'] ?? 'Mata Kuliah Unknown';
+                  final kodeKelas = course['kode_kelas'] ?? '-';
+                  final semester = course['semester'] ?? '-';
+                  final tahunAjaran = course['tahun_ajaran'] ?? '-';
+                  
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(16),
+                      onTap: () {
+                        Navigator.pop(context); // Tutup modal
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => DosenDetailKelasPage(
+                              kelasId: course['id'],
+                              namaMataKuliah: namaMk,
+                              kodeKelas: kodeKelas,
+                              semester: "$semester",
+                              tahunAjaran: tahunAjaran,
+                            ),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.grey.shade200),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.02),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            )
+                          ]
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF8B5CF6).withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(Icons.class_rounded, color: Color(0xFF8B5CF6)),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(namaMk, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF1E293B))),
+                                  const SizedBox(height: 4),
+                                  Text("Kelas $kodeKelas", style: const TextStyle(color: Colors.grey, fontSize: 13)),
+                                ],
+                              ),
+                            ),
+                            const Icon(Icons.chevron_right_rounded, color: Colors.grey),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
           ],
         ),
       ),

@@ -10,7 +10,6 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
-        "cloudinary/cloudinary_php": "*",
         "darkaonline/l5-swagger": "*",
         "laravel/framework": "^12.0",
         "laravel/sanctum": "^4.0",

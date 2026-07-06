@@ -49,69 +49,102 @@ class _KelasPageState extends State<KelasPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      body: CustomScrollView(
-        slivers: [
-          // 🔵 HEADER GRADIENT SIVER
-          SliverAppBar(
-            expandedHeight: 140,
-            floating: false,
-            pinned: true,
-            automaticallyImplyLeading: false,
-            backgroundColor: const Color(0xFF2563EB),
-            flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFF2563EB), Color(0xFF4F46E5)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+      body: RefreshIndicator(
+        onRefresh: _loadKelas,
+        color: const Color(0xFF2563EB),
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            // 🔵 HEADER GRADIENT SIVER
+            SliverAppBar(
+              expandedHeight: 140,
+              floating: false,
+              pinned: true,
+              automaticallyImplyLeading: false,
+              backgroundColor: const Color(0xFF2563EB),
+              flexibleSpace: FlexibleSpaceBar(
+                background: Stack(
+                  children: [
+                    Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Color(0xFF2563EB), Color(0xFF4F46E5), Color(0xFF312E81)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      top: -40,
+                      right: -40,
+                      child: Container(
+                        width: 150,
+                        height: 150,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white.withValues(alpha: 0.1),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      bottom: -20,
+                      left: -20,
+                      child: Container(
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white.withValues(alpha: 0.08),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                titlePadding: const EdgeInsets.only(left: 20, bottom: 16),
+                title: const Text(
+                  "Kelas Saya",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
               ),
-              titlePadding: const EdgeInsets.only(left: 20, bottom: 16),
-              title: const Text(
-                "Kelas Saya",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(40),
+                  bottomRight: Radius.circular(40),
                 ),
               ),
             ),
-            shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(40),
-                bottomRight: Radius.circular(40),
-              ),
-            ),
-          ),
-          
-          // 🔥 CONTENT
-          SliverToBoxAdapter(
-            child: _isLoading 
-                ? const Padding(padding: EdgeInsets.only(top: 20), child: ListShimmer(itemCount: 4))
-                : _kelas.isEmpty 
-                    ? const Padding(
-                        padding: EdgeInsets.only(top: 100),
-                        child: Center(
-                          child: Text(
-                            "Anda belum terdaftar di kelas manapun.",
-                            style: TextStyle(color: Colors.grey, fontSize: 16),
+            
+            // 🔥 CONTENT
+            SliverToBoxAdapter(
+              child: _isLoading 
+                  ? const Padding(padding: EdgeInsets.only(top: 20), child: ListShimmer(itemCount: 4))
+                  : _kelas.isEmpty 
+                      ? const Padding(
+                          padding: EdgeInsets.only(top: 100),
+                          child: Center(
+                            child: Text(
+                              "Anda belum terdaftar di kelas manapun.",
+                              style: TextStyle(color: Colors.grey, fontSize: 16),
+                            ),
+                          ),
+                        )
+                      : Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            children: _kelas.map((k) {
+                              return _buildKelasCard(k);
+                            }).toList(),
                           ),
                         ),
-                      )
-                    : Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          children: _kelas.map((k) {
-                            return _buildKelasCard(k);
-                          }).toList(),
-                        ),
-                      ),
-          ),
-          
-          // Spacer for bottom
-          const SliverPadding(padding: EdgeInsets.only(bottom: 40)),
-        ],
+            ),
+            
+            // Spacer for bottom
+            const SliverPadding(padding: EdgeInsets.only(bottom: 40)),
+          ],
+        ),
       ),
     );
   }
@@ -155,20 +188,25 @@ class _KelasPageState extends State<KelasPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEFF6FF), // Light Blue
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFBFDBFE)),
-                    ),
-                    child: Text(
-                      "$kodeMk • $kodeKelas",
-                      style: const TextStyle(
-                        color: Color(0xFF1D4ED8), // Dark Blue
-                        fontWeight: FontWeight.w700,
-                        fontSize: 12,
-                        letterSpacing: 0.5,
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      margin: const EdgeInsets.only(right: 8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEFF6FF), // Light Blue
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFBFDBFE)),
+                      ),
+                      child: Text(
+                        "$kodeMk • $kodeKelas",
+                        style: const TextStyle(
+                          color: Color(0xFF1D4ED8), // Dark Blue
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12,
+                          letterSpacing: 0.5,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ),

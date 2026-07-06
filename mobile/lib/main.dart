@@ -1,5 +1,7 @@
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import 'package:siam_mobile/auth/providers/user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:siam_mobile/core/storage_service.dart';
 import 'package:siam_mobile/auth/pages/login_page.dart';
@@ -21,7 +23,14 @@ void main() async {
   // Load environment variables
   await dotenv.load(fileName: ".env");
   
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => UserProvider()),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {

@@ -37,8 +37,8 @@ class DioClient {
           return handler.next(options);
         },
         onError: (DioException e, handler) async {
-          // Jika token expired atau ditolak (401)
-          if (e.response?.statusCode == 401) {
+          // Jika token expired atau ditolak (401), abaikan jika sedang di endpoint /login
+          if (e.response?.statusCode == 401 && !e.requestOptions.path.contains('/login')) {
             await StorageService.removeAll();
             
             final context = globalNavigatorKey.currentContext;

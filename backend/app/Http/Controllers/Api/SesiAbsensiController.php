@@ -123,7 +123,7 @@ class SesiAbsensiController extends Controller
                     'qr_token' => $token,
                     'latitude_dosen' => $validated['latitude_dosen'],
                     'longitude_dosen' => $validated['longitude_dosen'],
-                    'radius_validasi' => 50,
+                    'radius_validasi' => env('APP_ENV') === 'local' ? 999999 : 50, // Bypass radius saat development
                     'expired_at' => Carbon::now()->addMinutes(10),
                     'is_closed' => false,
                 ]
@@ -338,8 +338,9 @@ class SesiAbsensiController extends Controller
     )]
     public function byPertemuan($pertemuan_id)
     {
-        $sesi = SesiAbsensi::withCount('absensis')->where('pertemuan_id', $pertemuan_id)
-            ->orderBy('created_at', 'desc')
+        $sesi = SesiAbsensi::withCount('absensis')
+            ->where((string) 'pertemuan_id', $pertemuan_id)
+            ->orderBy((string) 'created_at', 'desc')
             ->get();
 
         if ($sesi->isEmpty()) {
@@ -396,10 +397,10 @@ class SesiAbsensiController extends Controller
     )]
     public function aktif($pertemuan_id)
     {
-        $sesi = SesiAbsensi::where('pertemuan_id', $pertemuan_id)
+        $sesi = SesiAbsensi::where((string) 'pertemuan_id', $pertemuan_id)
             ->withCount('absensis')
-            ->where('expired_at', '>', now())
-            ->where('is_closed', false)
+            ->where((string) 'expired_at', '>', now())
+            ->where((string) 'is_closed', false)
             ->first();
 
         if (!$sesi) {

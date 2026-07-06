@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:siam_mobile/auth/models/user_model.dart';
-import 'package:siam_mobile/auth/services/auth_service.dart';
+import 'package:provider/provider.dart';
+import 'package:siam_mobile/auth/providers/user_provider.dart';
 import 'package:siam_mobile/mahasiswa/services/mahasiswa_service.dart';
 import 'package:siam_mobile/shared/glass_card.dart';
 import 'package:siam_mobile/shared/progress_ring.dart';
 import 'package:siam_mobile/mahasiswa/pages/scan_page.dart';
 import 'package:siam_mobile/shared/shimmer_loading.dart';
+import 'package:siam_mobile/core/api_constants.dart';
 
 class DashboardPage extends StatefulWidget {
   final Function(int)? onTabChange;
@@ -16,30 +17,31 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
-  final AuthService _authService = AuthService();
   final MahasiswaService _mahasiswaService = MahasiswaService();
 
-  User? _user;
   List<dynamic> _riwayat = [];
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        if (context.read<UserProvider>().user == null) {
+          context.read<UserProvider>().fetchUser();
+        }
+      }
+    });
     _loadData();
   }
 
   Future<void> _loadData() async {
     try {
-      final responses = await Future.wait([
-        _authService.getMe(),
-        _mahasiswaService.getRiwayatAbsensi(),
-      ]);
+      final riwayat = await _mahasiswaService.getRiwayatAbsensi();
       
       if (mounted) {
         setState(() {
-          _user = responses[0] as User;
-          _riwayat = responses[1] as List<dynamic>;
+          _riwayat = riwayat;
           _isLoading = false;
         });
       }
@@ -54,6 +56,9 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
+    final userProvider = context.watch<UserProvider>();
+    final user = userProvider.user;
+    
     // 📊 STATS CALCULATION
     int hadir = _riwayat.where((r) => r['status'] == 'hadir').length;
     int terlambat = _riwayat.where((r) => r['status'] == 'terlambat').length;
@@ -132,7 +137,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.fromLTRB(20, 70, 20, 30),
-                child: _isLoading 
+                child: _isLoading || userProvider.isLoading 
                 ? const Center(child: CircularProgressIndicator(color: Colors.white))
                 : Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -144,16 +149,21 @@ class _DashboardPageState extends State<DashboardPage> {
                             const Text("Halo,", style: TextStyle(color: Colors.white70)),
                             const SizedBox(height: 5),
                             Text(
-                              _user?.name ?? "Nama Tidak Diketahui",
+                              user?.name ?? "Nama Tidak Diketahui",
                               style: const TextStyle(
                                 color: Colors.white,
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
+                                fontSize: 24,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -0.5,
                               ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                             Text(
-                              "${_user?.identifier ?? '-'} • ${_user?.prodiName ?? '-'}",
+                              "${user?.identifier ?? '-'} • ${user?.prodiName ?? '-'}",
                               style: const TextStyle(color: Colors.white70),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),
@@ -165,17 +175,25 @@ class _DashboardPageState extends State<DashboardPage> {
                           color: Colors.white.withValues(alpha: 0.2),
                           shape: BoxShape.circle,
                           border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+                          image: (user?.avatar != null)
+                              ? DecorationImage(
+                                  image: NetworkImage(user!.avatar!.startsWith('http') ? user.avatar! : '${ApiConstants.baseUrl.replaceAll('/api', '/storage')}${user.avatar!.startsWith('/') ? '' : '/'}${user.avatar}'),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
                         ),
-                        child: Center(
-                          child: Text(
-                            _getInitials(_user?.name ?? ""),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
+                        child: (user?.avatar == null)
+                            ? Center(
+                                child: Text(
+                                  _getInitials(user?.name ?? ""),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              )
+                            : null,
                       ),
                     ],
                   ),
